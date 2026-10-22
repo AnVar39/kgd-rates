@@ -1,10 +1,19 @@
-"""Собирает курсы ЦБ и банков/обменников Калининграда -> data/rates.json"""
-import json, re, html, datetime as dt
+"""Курсы ЦБ и банков Калининграда -> data/rates.json (источник банков: ru.myfin.by)"""
+import json, re, html, time, datetime as dt
 import xml.etree.ElementTree as ET
 import requests
 
-UA = {"User-Agent": "Mozilla/5.0 (kgd-rates bot)"}
+UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+      "Accept-Language": "ru-RU,ru;q=0.9"}
+BASE = "https://ru.myfin.by"
+CITY = "kaliningrad"
 OUT = "data/rates.json"
+SEEDS = ["alfabank", "gazprombank", "rshb", "tcs", "zenit", "intesa", "maritime",
+         "kamkombank", "transcapitalbank", "mts-bank", "sberbank", "vtb", "psb", "sovcombank"]
+NAMES = {"alfabank": "Альфа-Банк", "gazprombank": "Газпромбанк", "rshb": "Россельхозбанк",
+         "tcs": "Т-Банк", "zenit": "Банк Зенит", "intesa": "Банк Интеза", "maritime": "Морской банк",
+         "kamkombank": "Камкомбанк", "transcapitalbank": "ТрансКапиталБанк", "mts-bank": "МТС Банк",
+         "sberbank": "Сбербанк", "vtb": "ВТБ", "psb": "ПСБ", "sovcombank": "Совкомбанк"}
 
 def cbr():
     r = requests.get("https://www.cbr.ru/scripts/XML_daily.asp", headers=UA, timeout=30)
@@ -19,38 +28,55 @@ def cbr():
 
 def num(x):
     try:
-        return float(str(x).replace(",", ".").replace(" ", ""))
+        v = float(str(x).replace(",", ".").replace(" ", ""))
+        return v if 30 < v < 200 else None
     except Exception:
         return None
 
-def walk(o, found):
-    """Ищем в любом JSON словари вида {name, buy, sell}."""
-    if isinstance(o, dict):
-        low = {k.lower(): v for k, v in o.items()}
-        name = low.get("name") or low.get("title") or low.get("bankname")
-        buy = num(low.get("buy") or low.get("bid"))
-        sell = num(low.get("sell") or low.get("ask"))
-        if isinstance(name, str) and buy and sell and 30 < buy < 200 and 30 < sell < 200:
-            found.append({"name": name.strip(), "buy": buy, "sell": sell})
-        for v in o.values():
-            walk(v, found)
-    elif isinstance(o, list):
-        for v in o:
-            walk(v, found)
+def strip(s):
+    return html.unescape(re.sub(r"<[^>]+>", "", s)).strip()
 
-def banki(cur):
-    """banki.ru: наличные курсы по Калининграду. Парсер — best effort."""
-    url = f"https://www.banki.ru/products/currency/cash/{cur.lower()}/kaliningrad/"
-    page = requests.get(url, headers=UA, timeout=30).text
-    blobs = re.findall(r'<script[^>]*type="application/(?:ld\+)?json"[^>]*>(.*?)</script>', page, re.S)
-    blobs += [html.unescape(b) for b in re.findall(r'data-module-options=["\'](.*?)["\']', page, re.S)]
-    found = []
-    for b in blobs:
+def parse_bank(page):
+    res = {}
+    for row in re.findall(r"<tr[^>]*>(.*?)</tr>", page, re.S):
+        cells = [strip(c) for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", row, re.S)]
+        if len(cells) >= 3:
+            code = {"Доллар": "USD", "Евро": "EUR"}.get(cells[0])
+            if code and code not in res:
+                b, s = num(cells[1]), num(cells[2])
+                if b and s:
+                    res[code] = {"buy": b, "sell": s}
+    return res
+
+def bank_name(slug, page):
+    if slug in NAMES:
+        return NAMES[slug]
+    m = re.search(r"<h1[^>]*>(.*?)</h1>", page, re.S)
+    t = strip(m.group(1)) if m else slug
+    return re.sub(r"^Курсы валют в\s+|\s+в Калининграде.*$", "", t)
+
+def collect(errors):
+    queue, seen, banks = list(SEEDS), set(), {}
+    while queue and len(seen) < 60:
+        slug = queue.pop(0)
+        if slug in seen:
+            continue
+        seen.add(slug)
         try:
-            walk(json.loads(b), found)
-        except Exception:
-            pass
-    return list({f["name"]: f for f in found}.values())
+            r = requests.get(f"{BASE}/bank/{slug}/currency/{CITY}", headers=UA, timeout=30)
+            if r.status_code != 200:
+                continue
+            page = r.text
+            for s in re.findall(rf"/bank/([\w-]+)/currency/{CITY}", page):
+                if s not in seen:
+                    queue.append(s)
+            rates = parse_bank(page)
+            if rates:
+                banks[slug] = {"name": bank_name(slug, page), **rates}
+        except Exception as e:
+            errors.append(f"{slug}: {e}")
+        time.sleep(0.7)
+    return list(banks.values())
 
 def main():
     data = {"updated": dt.datetime.now(dt.timezone.utc).isoformat(), "cbr": {}, "banks": [], "errors": []}
@@ -58,14 +84,7 @@ def main():
         data["cbr"] = cbr()
     except Exception as e:
         data["errors"].append(f"cbr: {e}")
-    banks = {}
-    for cur in ("USD", "EUR"):
-        try:
-            for b in banki(cur):
-                banks.setdefault(b["name"], {"name": b["name"]})[cur] = {"buy": b["buy"], "sell": b["sell"]}
-        except Exception as e:
-            data["errors"].append(f"banki {cur}: {e}")
-    data["banks"] = sorted(banks.values(), key=lambda x: x["name"])
+    data["banks"] = sorted(collect(data["errors"]), key=lambda x: x["name"])
     if not data["banks"]:
         data["errors"].append("банки не найдены — проверьте парсер")
     json.dump(data, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
