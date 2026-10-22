@@ -50,6 +50,13 @@ async function refresh() {
 refresh(); setInterval(refresh, TTL);
 
 http.createServer((req, res) => {
+    if (req.url.startsWith('/api/widget')) {
+    const B = cache.banks.filter(b => b.u[0] > 0 && b.e[0] > 0), c = cache.cbr;
+    const m = (k, i, mn) => B.length ? Math[mn ? 'min' : 'max'](...B.map(b => b[k][i])) : 0, x = v => (+v || 0).toFixed(2);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ cbr_usd: x(c && c.usd), cbr_eur: x(c && c.eur),
+      usd_buy: x(m('u', 1, 1)), usd_sell: x(m('u', 0, 0)), eur_buy: x(m('e', 1, 1)), eur_sell: x(m('e', 0, 0)) }));
+    }
   if (req.url.startsWith('/api/rates')) {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
     return res.end(JSON.stringify(cache));
