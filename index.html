@@ -13,7 +13,7 @@
 :root{--bg:#f6f7f9;--card:#fff;--tx:#14181f;--mu:#66707f;--ac:#1a6ef0;--ok:#0a8a4a;--okbg:#e3f6ec;--bd:#e2e5ea}
 @media(prefers-color-scheme:dark){:root{--bg:#10131a;--card:#1a1f29;--tx:#eef1f5;--mu:#8e98a8;--ac:#5b9bff;--ok:#3ddc84;--okbg:#14301f;--bd:#2a3140}}
 *{box-sizing:border-box}body{margin:0 auto;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif;max-width:720px;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom))}
-header{display:flex;align-items:center;gap:10px}header img{height:44px}h1{font-size:19px;margin:0}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px}header img{height:56px;flex:none}h1{font-size:19px;margin:0;flex:1}
 .tabs{display:flex;gap:8px;margin:12px 0}
 .tabs button{flex:1;padding:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit}
 .tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
@@ -24,12 +24,13 @@ header{display:flex;align-items:center;gap:10px}header img{height:44px}h1{font-s
 th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}th:first-child,td:first-child{text-align:left;white-space:normal}
 th{cursor:pointer;user-select:none}th.on{color:var(--ac)}
 tr.best{background:var(--okbg)}td.g{color:var(--ok);font-weight:700}
-.err{color:#c0392b;font-size:13px}#inst{display:none;margin-top:8px;padding:8px 12px;border-radius:10px;border:0;background:var(--ac);color:#fff;font:inherit}
+.lk{color:var(--ac);text-decoration:underline;cursor:pointer}#md{position:fixed;inset:0;background:#0009;display:flex;align-items:flex-end;justify-content:center;z-index:9}#md[hidden]{display:none}.mb{background:var(--card);width:100%;max-width:720px;max-height:82vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}.mb h2{margin:0 0 4px;font-size:18px}.br{padding:10px 0;border-bottom:1px solid var(--bd)}.br a{font-size:13px}#mc{float:right;border:0;background:none;color:var(--tx);font-size:22px}.err{color:#c0392b;font-size:13px}#inst{display:none;margin-top:8px;padding:8px 12px;border-radius:10px;border:0;background:var(--ac);color:#fff;font:inherit}
 </style></head><body>
-<header><img src="coat.png" alt="Герб Калининграда"><h1>Курсы валют · Калининград</h1></header>
+<header><h1>Курсы валют · Калининград</h1><img src="coat.png" alt="Герб Калининграда"></header>
 <div class="mu" id="upd">Загрузка…</div><button id="inst">Установить приложение</button>
 <div class="tabs"><button id="t1" class="on">Главная</button><button id="t2">Все банки</button></div>
 <div id="v1"></div><div id="v2" hidden></div><div class="err" id="err"></div>
+<div id="md" hidden><div class="mb"><button id="mc">✕</button><div id="mh"></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
 const f=x=>x==null?"—":x.toFixed(2);
@@ -37,6 +38,8 @@ const names={USD:"Доллар США",EUR:"Евро"};
 const COLS=[["USD","buy","$ покупка"],["USD","sell","$ продажа"],["EUR","buy","€ покупка"],["EUR","sell","€ продажа"]];
 let D=null,key="name",dir=1;
 const val=(b,c,t)=>b[c]?b[c][t]:null;
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const lk=b=>b?`<a class="lk" data-i="${D.banks.indexOf(b)}">${esc(b.name)}</a>`:"—";
 function best(banks,c){
   const a=banks.filter(b=>b[c]);if(!a.length)return {};
   return {sell:a.reduce((m,b)=>b[c].buy>m[c].buy?b:m),buy:a.reduce((m,b)=>b[c].sell<m[c].sell?b:m)};
@@ -63,7 +66,7 @@ function render2(){
   let h='<div class="card wrap"><table><tr><th data-k="name" class="'+(key==="name"?"on":"")+'">Банк'+arrow("name")+'</th>'+
    COLS.map(([c,t,l])=>{const k=c+"."+t;return `<th data-k="${k}" class="${key===k?"on":""}">${l}${arrow(k)}</th>`}).join("")+"</tr>";
   banks.forEach(b=>{
-    h+=`<tr class="${b===w?"best":""}"><td>${b===w?"★ ":""}${b.name}</td>`+COLS.map(([c,t])=>{const v=val(b,c,t);return `<td class="${v!=null&&v===ext[c+t]?"g":""}">${f(v)}</td>`}).join("")+"</tr>";
+    h+=`<tr class="${b===w?"best":""}"><td>${b===w?"★ ":""}${lk(b)}</td>`+COLS.map(([c,t])=>{const v=val(b,c,t);return `<td class="${v!=null&&v===ext[c+t]?"g":""}">${f(v)}</td>`}).join("")+"</tr>";
   });
   $("v2").innerHTML=h+`</table><div class="mu">Нажмите на заголовок столбца — сортировка по возрастанию/убыванию. Зелёная строка (★) — банк с лучшими курсами сразу в нескольких столбцах; зелёные цифры — лучшее значение в столбце. Покупка — банк покупает у вас, продажа — банк продаёт вам.</div></div>`;
   $("v2").querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(key===k)dir=-dir;else{key=k;dir=1}render2()});
@@ -74,8 +77,8 @@ function render1(){
     const b=best(D.banks,c),cb=D.cbr[c];
     h+=`<div class="card"><b>${names[c]}</b>
     <div class="row"><span>Курс ЦБ${D.cbr.date?" ("+D.cbr.date+")":""}</span><span class="big">${f(cb)} ₽</span></div>
-    <div class="row"><span>Продать выгоднее: <span class="mu">${b.sell?b.sell.name:"—"}</span></span><span class="ok">${f(b.sell&&b.sell[c].buy)} ₽</span></div>
-    <div class="row"><span>Купить выгоднее: <span class="mu">${b.buy?b.buy.name:"—"}</span></span><span class="ok">${f(b.buy&&b.buy[c].sell)} ₽</span></div></div>`;
+    <div class="row"><span>Продать выгоднее: <span class="mu">${lk(b.sell)}</span></span><span class="ok">${f(b.sell&&b.sell[c].buy)} ₽</span></div>
+    <div class="row"><span>Купить выгоднее: <span class="mu">${lk(b.buy)}</span></span><span class="ok">${f(b.buy&&b.buy[c].sell)} ₽</span></div></div>`;
   }
   $("v1").innerHTML=h+`<div class="mu">«Продать» — банк покупает у вас валюту (макс. курс). «Купить» — банк продаёт вам (мин. курс).</div>`;
 }
@@ -85,6 +88,13 @@ fetch("data/rates.json?"+Date.now()).then(r=>r.json()).then(d=>{
 }).catch(e=>$("err").textContent="Ошибка загрузки: "+e);
 $("t1").onclick=()=>{$("v1").hidden=false;$("v2").hidden=true;$("t1").className="on";$("t2").className=""};
 $("t2").onclick=()=>{$("v1").hidden=true;$("v2").hidden=false;$("t2").className="on";$("t1").className=""};
+function openBank(i){const b=D.banks[i];if(!b)return;const br=b.branches||[];
+  const r=(x,l)=>x?`${l} ${f(x.buy)} / ${f(x.sell)}`:"";
+  $("mh").innerHTML=`<h2>${esc(b.name)}</h2><div class="mu">Пункты обмена и отделения в Калининграде: ${br.length}. Курс: покупка / продажа.</div>`+
+   (br.length?br.map(x=>`<div class="br">${esc(x.address)}<div class="mu">${[r(x.USD,"$"),r(x.EUR,"€")].filter(Boolean).join(" · ")}</div><a class="lk" target="_blank" rel="noopener" href="https://yandex.ru/maps/?text=${encodeURIComponent("Калининград "+b.name+" "+x.address)}">Показать на карте</a></div>`).join(""):'<div class="br mu">Адреса пока не найдены.</div>')+
+   `<div class="mu" style="margin-top:8px">Перед визитом уточните курс и наличие валюты в отделении.</div>`;
+  $("md").hidden=false}
+document.addEventListener("click",e=>{const a=e.target.closest(".lk[data-i]");if(a)openBank(+a.dataset.i);if(e.target.id==="md"||e.target.id==="mc")$("md").hidden=true});
 let dp;addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e;$("inst").style.display="inline-block"});
 $("inst").onclick=()=>{dp&&dp.prompt();$("inst").style.display="none"};
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
