@@ -1,50 +1,91 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Курсы валют · Калининград</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#1a6ef0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Курсы КГД">
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--tx:#14181f;--mu:#66707f;--ac:#1a6ef0;--ok:#0a8a4a;--bd:#e2e5ea}
-@media(prefers-color-scheme:dark){:root{--bg:#10131a;--card:#1a1f29;--tx:#eef1f5;--mu:#8e98a8;--ac:#5b9bff;--ok:#3ddc84;--bd:#2a3140}}
-*{box-sizing:border-box}body{margin:0 auto;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif;padding:12px;max-width:720px}
-h1{font-size:20px}.tabs{display:flex;gap:8px;margin:12px 0}
+:root{--bg:#f6f7f9;--card:#fff;--tx:#14181f;--mu:#66707f;--ac:#1a6ef0;--ok:#0a8a4a;--okbg:#e3f6ec;--bd:#e2e5ea}
+@media(prefers-color-scheme:dark){:root{--bg:#10131a;--card:#1a1f29;--tx:#eef1f5;--mu:#8e98a8;--ac:#5b9bff;--ok:#3ddc84;--okbg:#14301f;--bd:#2a3140}}
+*{box-sizing:border-box}body{margin:0 auto;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif;max-width:720px;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:10px}header img{height:44px}h1{font-size:19px;margin:0}
+.tabs{display:flex;gap:8px;margin:12px 0}
 .tabs button{flex:1;padding:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit}
 .tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
 .big{font-size:26px;font-weight:700}.mu{color:var(--mu);font-size:13px}.ok{color:var(--ok);font-weight:600}
 .row{display:flex;justify-content:space-between;gap:8px;padding:6px 0}
 .wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--bd)}th:first-child,td:first-child{text-align:left}
-.err{color:#c0392b;font-size:13px}
+th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}th:first-child,td:first-child{text-align:left;white-space:normal}
+th{cursor:pointer;user-select:none}th.on{color:var(--ac)}
+tr.best{background:var(--okbg)}td.g{color:var(--ok);font-weight:700}
+.err{color:#c0392b;font-size:13px}#inst{display:none;margin-top:8px;padding:8px 12px;border-radius:10px;border:0;background:var(--ac);color:#fff;font:inherit}
 </style></head><body>
-<h1>Курсы валют · Калининград</h1>
-<div class="mu" id="upd">Загрузка…</div>
+<header><img src="coat.svg" alt="Герб Калининграда"><h1>Курсы валют · Калининград</h1></header>
+<div class="mu" id="upd">Загрузка…</div><button id="inst">Установить приложение</button>
 <div class="tabs"><button id="t1" class="on">Главная</button><button id="t2">Все банки</button></div>
 <div id="v1"></div><div id="v2" hidden></div><div class="err" id="err"></div>
 <script>
+const $=id=>document.getElementById(id);
 const f=x=>x==null?"—":x.toFixed(2);
 const names={USD:"Доллар США",EUR:"Евро"};
+const COLS=[["USD","buy","$ покупка"],["USD","sell","$ продажа"],["EUR","buy","€ покупка"],["EUR","sell","€ продажа"]];
+let D=null,key="name",dir=1;
+const val=(b,c,t)=>b[c]?b[c][t]:null;
 function best(banks,c){
-  const a=banks.filter(b=>b[c]);
-  if(!a.length)return {};
+  const a=banks.filter(b=>b[c]);if(!a.length)return {};
   return {sell:a.reduce((m,b)=>b[c].buy>m[c].buy?b:m),buy:a.reduce((m,b)=>b[c].sell<m[c].sell?b:m)};
 }
-const v1=document.getElementById("v1"),v2=document.getElementById("v2"),t1=document.getElementById("t1"),t2=document.getElementById("t2");
-fetch("data/rates.json?"+Date.now()).then(r=>r.json()).then(d=>{
-  document.getElementById("upd").textContent="Обновлено: "+(d.updated?new Date(d.updated).toLocaleString("ru-RU"):"нет данных");
-  document.getElementById("err").textContent=(d.errors||[]).join("; ");
+function winner(banks){
+  const sc=new Map(banks.map(b=>[b.name,0]));
+  COLS.forEach(([c,t])=>{
+    const v=banks.map(b=>val(b,c,t)).filter(x=>x!=null);if(!v.length)return;
+    const m=t==="buy"?Math.max(...v):Math.min(...v);
+    banks.forEach(b=>{if(val(b,c,t)===m)sc.set(b.name,sc.get(b.name)+1)});
+  });
+  return banks.slice().sort((a,b)=>sc.get(b.name)-sc.get(a.name)||(val(a,"USD","sell")||999)-(val(b,"USD","sell")||999))[0];
+}
+function render2(){
+  const banks=D.banks.slice();if(!banks.length){$("v2").innerHTML='<div class="card mu">Нет данных</div>';return}
+  const w=winner(banks);
+  const ext={};COLS.forEach(([c,t])=>{const v=banks.map(b=>val(b,c,t)).filter(x=>x!=null);ext[c+t]=v.length?(t==="buy"?Math.max(...v):Math.min(...v)):null});
+  banks.sort((a,b)=>{
+    if(key==="name")return dir*a.name.localeCompare(b.name,"ru");
+    const [c,t]=key.split(".");const x=val(a,c,t),y=val(b,c,t);
+    if(x==null)return 1;if(y==null)return -1;return dir*(x-y);
+  });
+  const arrow=k=>key===k?(dir>0?" ▲":" ▼"):"";
+  let h='<div class="card wrap"><table><tr><th data-k="name" class="'+(key==="name"?"on":"")+'">Банк'+arrow("name")+'</th>'+
+   COLS.map(([c,t,l])=>{const k=c+"."+t;return `<th data-k="${k}" class="${key===k?"on":""}">${l}${arrow(k)}</th>`}).join("")+"</tr>";
+  banks.forEach(b=>{
+    h+=`<tr class="${b===w?"best":""}"><td>${b===w?"★ ":""}${b.name}</td>`+COLS.map(([c,t])=>{const v=val(b,c,t);return `<td class="${v!=null&&v===ext[c+t]?"g":""}">${f(v)}</td>`}).join("")+"</tr>";
+  });
+  $("v2").innerHTML=h+`</table><div class="mu">Нажмите на заголовок столбца — сортировка по возрастанию/убыванию. Зелёная строка (★) — банк с лучшими курсами сразу в нескольких столбцах; зелёные цифры — лучшее значение в столбце. Покупка — банк покупает у вас, продажа — банк продаёт вам.</div></div>`;
+  $("v2").querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(key===k)dir=-dir;else{key=k;dir=1}render2()});
+}
+function render1(){
   let h="";
   for(const c of["USD","EUR"]){
-    const b=best(d.banks,c),cb=d.cbr[c];
+    const b=best(D.banks,c),cb=D.cbr[c];
     h+=`<div class="card"><b>${names[c]}</b>
-    <div class="row"><span>Курс ЦБ${d.cbr.date?" ("+d.cbr.date+")":""}</span><span class="big">${f(cb)} ₽</span></div>
+    <div class="row"><span>Курс ЦБ${D.cbr.date?" ("+D.cbr.date+")":""}</span><span class="big">${f(cb)} ₽</span></div>
     <div class="row"><span>Продать выгоднее: <span class="mu">${b.sell?b.sell.name:"—"}</span></span><span class="ok">${f(b.sell&&b.sell[c].buy)} ₽</span></div>
     <div class="row"><span>Купить выгоднее: <span class="mu">${b.buy?b.buy.name:"—"}</span></span><span class="ok">${f(b.buy&&b.buy[c].sell)} ₽</span></div></div>`;
   }
-  v1.innerHTML=h+`<div class="mu">«Продать» — банк покупает у вас валюту (макс. курс). «Купить» — банк продаёт вам (мин. курс).</div>`;
-  v2.innerHTML=`<div class="card wrap"><table><tr><th>Банк</th><th>$ покупка</th><th>$ продажа</th><th>€ покупка</th><th>€ продажа</th></tr>`+
-   d.banks.map(b=>`<tr><td>${b.name}</td><td>${f(b.USD&&b.USD.buy)}</td><td>${f(b.USD&&b.USD.sell)}</td><td>${f(b.EUR&&b.EUR.buy)}</td><td>${f(b.EUR&&b.EUR.sell)}</td></tr>`).join("")+
-   `</table><div class="mu">покупка — банк покупает у вас, продажа — банк продаёт вам</div></div>`;
-}).catch(e=>document.getElementById("err").textContent="Ошибка загрузки: "+e);
-t1.onclick=()=>{v1.hidden=false;v2.hidden=true;t1.className="on";t2.className=""};
-t2.onclick=()=>{v1.hidden=true;v2.hidden=false;t2.className="on";t1.className=""};
+  $("v1").innerHTML=h+`<div class="mu">«Продать» — банк покупает у вас валюту (макс. курс). «Купить» — банк продаёт вам (мин. курс).</div>`;
+}
+fetch("data/rates.json?"+Date.now()).then(r=>r.json()).then(d=>{
+  D=d;$("upd").textContent="Обновлено: "+(d.updated?new Date(d.updated).toLocaleString("ru-RU"):"нет данных");
+  $("err").textContent=(d.errors||[]).join("; ");render1();render2();
+}).catch(e=>$("err").textContent="Ошибка загрузки: "+e);
+$("t1").onclick=()=>{$("v1").hidden=false;$("v2").hidden=true;$("t1").className="on";$("t2").className=""};
+$("t2").onclick=()=>{$("v1").hidden=true;$("v2").hidden=false;$("t2").className="on";$("t1").className=""};
+let dp;addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e;$("inst").style.display="inline-block"});
+$("inst").onclick=()=>{dp&&dp.prompt();$("inst").style.display="none"};
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script></body></html>
