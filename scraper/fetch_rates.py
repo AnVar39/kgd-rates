@@ -108,6 +108,23 @@ def collect(errors):
         time.sleep(0.7)
     return list(banks.values())
 
+def history():
+    """Динамика курса ЦБ за ~13 месяцев -> data/history.json"""
+    fmt = "%d/%m/%Y"
+    end = dt.date.today()
+    start = end - dt.timedelta(days=400)
+    out = {}
+    for code, vid in (("USD", "R01235"), ("EUR", "R01239")):
+        r = requests.get("https://www.cbr.ru/scripts/XML_dynamic.req", headers=UA, timeout=30,
+                         params={"date_req1": start.strftime(fmt), "date_req2": end.strftime(fmt), "VAL_NM_RQ": vid})
+        pts = []
+        for rec in ET.fromstring(r.content).findall("Record"):
+            d = dt.datetime.strptime(rec.get("Date"), fmt).strftime("%Y-%m-%d")
+            v = float(rec.findtext("Value").replace(",", ".")) / int(rec.findtext("Nominal"))
+            pts.append([d, round(v, 4)])
+        out[code] = pts
+    return out
+
 def main():
     data = {"updated": dt.datetime.now(dt.timezone.utc).isoformat(), "cbr": {}, "banks": [], "errors": []}
     try:
@@ -117,6 +134,12 @@ def main():
     data["banks"] = sorted(collect(data["errors"]), key=lambda x: x["name"])
     if not data["banks"]:
         data["errors"].append("банки не найдены — проверьте парсер")
+    try:
+        h = history()
+        if all(h.values()):
+            json.dump(h, open("data/history.json", "w", encoding="utf-8"), ensure_ascii=False)
+    except Exception as e:
+        data["errors"].append(f"history: {e}")
     json.dump(data, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(data["errors"], len(data["banks"]), "банков")
 
