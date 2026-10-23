@@ -24,7 +24,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px}he
 th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}th:first-child,td:first-child{text-align:left;white-space:normal}
 th{cursor:pointer;user-select:none}th.on{color:var(--ac)}
 tr.best{background:var(--okbg)}td.g{color:var(--ok);font-weight:700}
-.lk{color:var(--ac);text-decoration:underline;cursor:pointer}#md{position:fixed;inset:0;background:#0009;display:flex;align-items:flex-end;justify-content:center;z-index:9}#md[hidden]{display:none}.mb{background:var(--card);width:100%;max-width:720px;max-height:82vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}.mb h2{margin:0 0 4px;font-size:18px}.br{padding:10px 0;border-bottom:1px solid var(--bd)}.br a{font-size:13px}#mc{float:right;border:0;background:none;color:var(--tx);font-size:22px}.err{color:#c0392b;font-size:13px}#inst{display:none;margin-top:8px;padding:8px 12px;border-radius:10px;border:0;background:var(--ac);color:#fff;font:inherit}
+.lk{color:var(--ac);text-decoration:underline;cursor:pointer}#md{position:fixed;inset:0;background:#0009;display:flex;align-items:flex-end;justify-content:center;z-index:9}#md[hidden]{display:none}.mb{background:var(--card);width:100%;max-width:720px;max-height:82vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}.mb h2{margin:0 0 4px;font-size:18px}.br{padding:10px 0;border-bottom:1px solid var(--bd)}.br a{font-size:13px}#mc{float:right;border:0;background:none;color:var(--tx);font-size:22px}.chips{display:flex;gap:6px;margin:4px 0 10px}.chips button{flex:1;padding:8px 2px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;font-size:13px}.chips button.on{background:var(--ac);color:#fff;border-color:var(--ac)}.ch svg{width:100%;height:auto;display:block;touch-action:pan-y}.ch .hd{display:flex;justify-content:space-between;align-items:baseline}.up{color:#d64545}.dn{color:var(--ok)}.err{color:#c0392b;font-size:13px}#inst{display:none;margin-top:8px;padding:8px 12px;border-radius:10px;border:0;background:var(--ac);color:#fff;font:inherit}
 </style></head><body>
 <header><h1>Курсы валют · Калининград</h1><img src="coat.png" alt="Герб Калининграда"></header>
 <div class="mu" id="upd">Загрузка…</div><button id="inst">Установить приложение</button>
@@ -80,7 +80,8 @@ function render1(){
     <div class="row"><span>Продать выгоднее: <span class="mu">${lk(b.sell)}</span></span><span class="ok">${f(b.sell&&b.sell[c].buy)} ₽</span></div>
     <div class="row"><span>Купить выгоднее: <span class="mu">${lk(b.buy)}</span></span><span class="ok">${f(b.buy&&b.buy[c].sell)} ₽</span></div></div>`;
   }
-  $("v1").innerHTML=h+`<div class="mu">«Продать» — банк покупает у вас валюту (макс. курс). «Купить» — банк продаёт вам (мин. курс).</div>`;
+  $("v1").innerHTML=h+`<div class="mu">«Продать» — банк покупает у вас валюту (макс. курс). «Купить» — банк продаёт вам (мин. курс).</div><h2 style="font-size:17px;margin:18px 0 8px">Динамика курса ЦБ</h2><div id="charts"></div>`;
+  renderCharts();
 }
 fetch("data/rates.json?"+Date.now()).then(r=>r.json()).then(d=>{
   D=d;$("upd").textContent="Обновлено: "+(d.updated?new Date(d.updated).toLocaleString("ru-RU"):"нет данных");
@@ -88,13 +89,52 @@ fetch("data/rates.json?"+Date.now()).then(r=>r.json()).then(d=>{
 }).catch(e=>$("err").textContent="Ошибка загрузки: "+e);
 $("t1").onclick=()=>{$("v1").hidden=false;$("v2").hidden=true;$("t1").className="on";$("t2").className=""};
 $("t2").onclick=()=>{$("v1").hidden=true;$("v2").hidden=false;$("t2").className="on";$("t1").className=""};
+
+let H=null,P=30,CH={};
+const PER=[[7,"7 дн."],[30,"1 мес."],[90,"3 мес."],[180,"6 мес."],[365,"1 год"]];
+const dfmt=s=>s.split("-").reverse().join(".");
+function renderCharts(){
+  const el=$("charts");if(!el)return;
+  if(!H){el.innerHTML='<div class="card mu">Графики появятся после ближайшего обновления данных.</div>';return}
+  let h='<div class="chips">'+PER.map(([d,l])=>`<button data-p="${d}" class="${d===P?"on":""}">${l}</button>`).join("")+"</div>";
+  const W=320,Ht=150,L=6,R=6,T=10,B=22,col={USD:"#1a6ef0",EUR:"#e8a317"};
+  for(const c of["USD","EUR"]){
+    const a=H[c]||[];if(!a.length)continue;
+    const cut=new Date(a[a.length-1][0]);cut.setDate(cut.getDate()-P);
+    const s=a.filter(p=>new Date(p[0])>=cut);CH[c]=s;const n=s.length;
+    const vs=s.map(p=>p[1]);let mn=Math.min(...vs),mx=Math.max(...vs);if(mx-mn<0.01){mn-=0.5;mx+=0.5}
+    const pad=(mx-mn)*0.08;mn-=pad;mx+=pad;
+    const X=i=>L+(W-L-R)*(n>1?i/(n-1):0.5),Y=v=>T+(Ht-T-B)*(1-(v-mn)/(mx-mn));
+    const d=s.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(p[1]).toFixed(1)).join("");
+    const ch=vs[n-1]-vs[0],pc=ch/vs[0]*100;
+    h+=`<div class="card ch"><div class="hd"><b>${names[c]}</b><span><b>${f(vs[n-1])} ₽</b> <span class="${ch>=0?"up":"dn"}">${ch>=0?"+":""}${ch.toFixed(2)} (${pc.toFixed(1)}%)</span></span></div>
+    <div class="mu" id="i_${c}">${dfmt(s[0][0])} — ${dfmt(s[n-1][0])} · мин ${f(Math.min(...vs))} · макс ${f(Math.max(...vs))}</div>
+    <svg viewBox="0 0 ${W} ${Ht}" data-c="${c}"><path d="${d}L${X(n-1).toFixed(1)} ${Ht-B}L${X(0).toFixed(1)} ${Ht-B}Z" fill="${col[c]}" opacity=".12"/>
+    <path d="${d}" fill="none" stroke="${col[c]}" stroke-width="2" stroke-linejoin="round"/>
+    <line id="l_${c}" y1="${T}" y2="${Ht-B}" stroke="var(--mu)" stroke-dasharray="3" visibility="hidden"/><circle id="o_${c}" r="4" fill="${col[c]}" visibility="hidden"/>
+    <text x="${L}" y="${Ht-6}" font-size="10" fill="var(--mu)">${dfmt(s[0][0]).slice(0,5)}</text><text x="${W-R}" y="${Ht-6}" font-size="10" text-anchor="end" fill="var(--mu)">${dfmt(s[n-1][0]).slice(0,5)}</text></svg></div>`;
+  }
+  el.innerHTML=h+'<div class="mu">Проведите пальцем по графику, чтобы увидеть курс на дату.</div>';
+  el.querySelectorAll("svg").forEach(sv=>{
+    const c=sv.dataset.c,s=CH[c],n=s.length;
+    const mv=e=>{const r=sv.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*W;
+      const i=Math.max(0,Math.min(n-1,Math.round((px-L)/(W-L-R)*(n-1))));
+      const vs=s.map(p=>p[1]);let mn=Math.min(...vs),mx=Math.max(...vs);if(mx-mn<0.01){mn-=0.5;mx+=0.5}const pad=(mx-mn)*0.08;mn-=pad;mx+=pad;
+      const x=L+(W-L-R)*(n>1?i/(n-1):0.5),y=T+(Ht-T-B)*(1-(s[i][1]-mn)/(mx-mn));
+      const ln=$("l_"+c),o=$("o_"+c);ln.setAttribute("x1",x);ln.setAttribute("x2",x);ln.setAttribute("visibility","visible");
+      o.setAttribute("cx",x);o.setAttribute("cy",y);o.setAttribute("visibility","visible");
+      $("i_"+c).textContent=dfmt(s[i][0])+" · "+f(s[i][1])+" ₽"};
+    sv.addEventListener("pointermove",mv);sv.addEventListener("pointerdown",mv);
+  });
+}
+fetch("data/history.json?"+Date.now()).then(r=>r.json()).then(x=>{H=x;renderCharts()}).catch(()=>{});
 function openBank(i){const b=D.banks[i];if(!b)return;const br=b.branches||[];
   const r=(x,l)=>x?`${l} ${f(x.buy)} / ${f(x.sell)}`:"";
   $("mh").innerHTML=`<h2>${esc(b.name)}</h2><div class="mu">Пункты обмена и отделения в Калининграде: ${br.length}. Курс: покупка / продажа.</div>`+
    (br.length?br.map(x=>`<div class="br">${esc(x.address)}<div class="mu">${[r(x.USD,"$"),r(x.EUR,"€")].filter(Boolean).join(" · ")}</div><a class="lk" target="_blank" rel="noopener" href="https://yandex.ru/maps/?text=${encodeURIComponent("Калининград "+b.name+" "+x.address)}">Показать на карте</a></div>`).join(""):'<div class="br mu">Адреса пока не найдены.</div>')+
    `<div class="mu" style="margin-top:8px">Перед визитом уточните курс и наличие валюты в отделении.</div>`;
   $("md").hidden=false}
-document.addEventListener("click",e=>{const a=e.target.closest(".lk[data-i]");if(a)openBank(+a.dataset.i);if(e.target.id==="md"||e.target.id==="mc")$("md").hidden=true});
+document.addEventListener("click",e=>{const a=e.target.closest(".lk[data-i]");if(a)openBank(+a.dataset.i);const pb=e.target.closest("button[data-p]");if(pb){P=+pb.dataset.p;renderCharts()}if(e.target.id==="md"||e.target.id==="mc")$("md").hidden=true});
 let dp;addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e;$("inst").style.display="inline-block"});
 $("inst").onclick=()=>{dp&&dp.prompt();$("inst").style.display="none"};
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
