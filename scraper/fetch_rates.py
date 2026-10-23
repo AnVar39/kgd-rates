@@ -121,7 +121,7 @@ def history():
             raise ValueError(f"ЦБ вернул не XML (код {r.status_code}): {r.text[:60]!r}")
         pts = []
         for rec in ET.fromstring(r.content).findall("Record"):
-            d = dt.datetime.strptime(rec.get("Date"), fmt).strftime("%Y-%m-%d")
+            d = dt.datetime.strptime(rec.get("Date").replace("/", "."), "%d.%m.%Y").strftime("%Y-%m-%d")
             v = float(rec.findtext("Value").replace(",", ".")) / int(rec.findtext("Nominal"))
             pts.append([d, round(v, 4)])
         out[code] = pts
