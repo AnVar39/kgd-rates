@@ -109,14 +109,16 @@ def collect(errors):
     return list(banks.values())
 
 def history():
-    """Динамика курса ЦБ за ~13 месяцев -> data/history.json"""
+    """Динамика курса ЦБ за ~13 месяцев -> словарь {USD: [[дата, курс]], EUR: ...}"""
     fmt = "%d/%m/%Y"
-    end = dt.date.today()
+    end = dt.date.today() + dt.timedelta(days=1)
     start = end - dt.timedelta(days=400)
     out = {}
     for code, vid in (("USD", "R01235"), ("EUR", "R01239")):
-        r = requests.get("https://www.cbr.ru/scripts/XML_dynamic.req", headers=UA, timeout=30,
+        r = requests.get("https://www.cbr.ru/scripts/XML_dynamic.asp", headers=UA, timeout=30,
                          params={"date_req1": start.strftime(fmt), "date_req2": end.strftime(fmt), "VAL_NM_RQ": vid})
+        if b"<ValCurs" not in r.content:
+            raise ValueError(f"ЦБ вернул не XML (код {r.status_code}): {r.text[:60]!r}")
         pts = []
         for rec in ET.fromstring(r.content).findall("Record"):
             d = dt.datetime.strptime(rec.get("Date"), fmt).strftime("%Y-%m-%d")
@@ -124,6 +126,20 @@ def history():
             pts.append([d, round(v, 4)])
         out[code] = pts
     return out
+
+def append_today(cbr_now):
+    """Запасной вариант: дописываем сегодняшний курс в уже накопленную историю."""
+    try:
+        h = json.load(open("data/history.json", encoding="utf-8"))
+    except Exception:
+        h = {"USD": [], "EUR": []}
+    if cbr_now.get("date"):
+        d = dt.datetime.strptime(cbr_now["date"], "%d.%m.%Y").strftime("%Y-%m-%d")
+        for c in ("USD", "EUR"):
+            if c in cbr_now and not any(p[0] == d for p in h.setdefault(c, [])):
+                h[c].append([d, cbr_now[c]])
+                h[c].sort()
+    return h
 
 def main():
     data = {"updated": dt.datetime.now(dt.timezone.utc).isoformat(), "cbr": {}, "banks": [], "errors": []}
@@ -136,10 +152,11 @@ def main():
         data["errors"].append("банки не найдены — проверьте парсер")
     try:
         h = history()
-        if all(h.values()):
-            json.dump(h, open("data/history.json", "w", encoding="utf-8"), ensure_ascii=False)
     except Exception as e:
         data["errors"].append(f"history: {e}")
+        h = append_today(data["cbr"])
+    if h and all(h.values()):
+        json.dump(h, open("data/history.json", "w", encoding="utf-8"), ensure_ascii=False)
     json.dump(data, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(data["errors"], len(data["banks"]), "банков")
 
