@@ -1,4 +1,4 @@
-"""Курсы ЦБ и банков Калининграда -> data/rates.json (источник банков: ru.myfin.by)"""
+"""Курсы ЦБ и банков Калининграда + адреса пунктов обмена -> data/rates.json (банки: ru.myfin.by)"""
 import json, re, html, time, datetime as dt
 import xml.etree.ElementTree as ET
 import requests
@@ -8,12 +8,13 @@ UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/1
 BASE = "https://ru.myfin.by"
 CITY = "kaliningrad"
 OUT = "data/rates.json"
-SEEDS = ["alfabank", "gazprombank", "rshb", "tcs", "zenit", "intesa", "maritime",
+SEEDS = ["alfabank", "gazprombank", "rshb", "tcs", "zenit", "intesa", "maritime", "energotransbank",
          "kamkombank", "transcapitalbank", "mts-bank", "sberbank", "vtb", "psb", "sovcombank"]
 NAMES = {"alfabank": "Альфа-Банк", "gazprombank": "Газпромбанк", "rshb": "Россельхозбанк",
          "tcs": "Т-Банк", "zenit": "Банк Зенит", "intesa": "Банк Интеза", "maritime": "Морской банк",
-         "kamkombank": "Камкомбанк", "transcapitalbank": "ТрансКапиталБанк", "mts-bank": "МТС Банк",
-         "sberbank": "Сбербанк", "vtb": "ВТБ", "psb": "ПСБ", "sovcombank": "Совкомбанк"}
+         "energotransbank": "Энерготрансбанк", "kamkombank": "Камкомбанк",
+         "transcapitalbank": "ТрансКапиталБанк", "mts-bank": "МТС Банк", "sberbank": "Сбербанк",
+         "vtb": "ВТБ", "psb": "ПСБ", "sovcombank": "Совкомбанк"}
 
 def cbr():
     r = requests.get("https://www.cbr.ru/scripts/XML_daily.asp", headers=UA, timeout=30)
@@ -34,19 +35,45 @@ def num(x):
         return None
 
 def strip(s):
-    return html.unescape(re.sub(r"<[^>]+>", "", s)).strip()
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", s))).strip()
 
 def parse_bank(page):
-    res = {}
+    """Возвращает (курсы банка, список пунктов обмена с адресами)."""
+    res, branches = {}, []
     for row in re.findall(r"<tr[^>]*>(.*?)</tr>", page, re.S):
         cells = [strip(c) for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", row, re.S)]
-        if len(cells) >= 3:
-            code = {"Доллар": "USD", "Евро": "EUR"}.get(cells[0])
-            if code and code not in res:
+        if len(cells) < 3:
+            continue
+        code = {"Доллар": "USD", "Евро": "EUR"}.get(cells[0])
+        if code:
+            if code not in res:
                 b, s = num(cells[1]), num(cells[2])
                 if b and s:
                     res[code] = {"buy": b, "sell": s}
-    return res
+        elif len(cells) >= 5 and re.search(r"Калининград|г\.", cells[0]):
+            br = {"address": cells[0]}
+            for cur, (i, j) in (("USD", (1, 2)), ("EUR", (3, 4))):
+                b, s = num(cells[i]), num(cells[j])
+                if b and s:
+                    br[cur] = {"buy": b, "sell": s}
+            if br not in branches:
+                branches.append(br)
+    return res, branches
+
+def addresses_fallback(slug):
+    """Если в таблице курсов адресов нет — берём список отделений банка."""
+    try:
+        r = requests.get(f"{BASE}/bank/{slug}/departments-list/{CITY}", headers=UA, timeout=30)
+        if r.status_code != 200:
+            return []
+        out = []
+        for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", r.text, re.S):
+            t = strip(c)
+            if t.startswith("Калининград") and len(t) > 14 and t not in [o["address"] for o in out]:
+                out.append({"address": t})
+        return out[:30]
+    except Exception:
+        return []
 
 def bank_name(slug, page):
     if slug in NAMES:
@@ -70,9 +97,12 @@ def collect(errors):
             for s in re.findall(rf"/bank/([\w-]+)/currency/{CITY}", page):
                 if s not in seen:
                     queue.append(s)
-            rates = parse_bank(page)
+            rates, branches = parse_bank(page)
             if rates:
-                banks[slug] = {"name": bank_name(slug, page), **rates}
+                if not branches:
+                    time.sleep(0.5)
+                    branches = addresses_fallback(slug)
+                banks[slug] = {"name": bank_name(slug, page), "branches": branches, **rates}
         except Exception as e:
             errors.append(f"{slug}: {e}")
         time.sleep(0.7)
