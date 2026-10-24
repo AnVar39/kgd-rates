@@ -101,36 +101,53 @@ $("t2").onclick=()=>{$("v1").hidden=true;$("v2").hidden=false;$("t2").className=
 let H=null,P=30,CH={};
 const PER=[[7,"7 дн."],[30,"1 мес."],[90,"3 мес."],[180,"6 мес."],[365,"1 год"]];
 const dfmt=s=>s.split("-").reverse().join(".");
+const MON=["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+function smooth(p){
+  const n=p.length,F=v=>v.toFixed(1);
+  if(n<3)return p.map((q,i)=>(i?"L":"M")+F(q[0])+" "+F(q[1])).join("");
+  const dx=[],m=[];for(let i=0;i<n-1;i++){dx[i]=p[i+1][0]-p[i][0];m[i]=(p[i+1][1]-p[i][1])/dx[i]}
+  const t=[m[0]];for(let i=1;i<n-1;i++)t[i]=m[i-1]*m[i]<=0?0:(m[i-1]+m[i])/2;t[n-1]=m[n-2];
+  let d="M"+F(p[0][0])+" "+F(p[0][1]);
+  for(let i=0;i<n-1;i++){const k=dx[i]/3;d+="C"+F(p[i][0]+k)+" "+F(p[i][1]+t[i]*k)+" "+F(p[i+1][0]-k)+" "+F(p[i+1][1]-t[i+1]*k)+" "+F(p[i+1][0])+" "+F(p[i+1][1])}
+  return d;
+}
 function renderCharts(){
   const el=$("charts");if(!el)return;
   if(!H){el.innerHTML='<div class="card mu">Графики появятся после ближайшего обновления данных.</div>';return}
   let h='<div class="chips">'+PER.map(([d,l])=>`<button data-p="${d}" class="${d===P?"on":""}">${l}</button>`).join("")+"</div>";
-  const W=320,Ht=150,L=6,R=6,T=10,B=22,col={USD:"#1a6ef0",EUR:"#e8a317"};
+  const W=340,Ht=200,L=8,R=44,T=12,B=26,col={USD:"#4c8dff",EUR:"#f0b429"};
   for(const c of["USD","EUR"]){
     const a=H[c]||[];if(!a.length)continue;
     const cut=new Date(a[a.length-1][0]);cut.setDate(cut.getDate()-P);
-    const s=a.filter(p=>new Date(p[0])>=cut);CH[c]=s;const n=s.length;
-    const vs=s.map(p=>p[1]);let mn=Math.min(...vs),mx=Math.max(...vs);if(mx-mn<0.01){mn-=0.5;mx+=0.5}
-    const pad=(mx-mn)*0.08;mn-=pad;mx+=pad;
-    const X=i=>L+(W-L-R)*(n>1?i/(n-1):0.5),Y=v=>T+(Ht-T-B)*(1-(v-mn)/(mx-mn));
-    const d=s.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(p[1]).toFixed(1)).join("");
+    const s=a.filter(p=>new Date(p[0])>=cut),n=s.length,vs=s.map(p=>p[1]);
+    let mn=Math.min(...vs),mx=Math.max(...vs);if(mx-mn<0.01){mn-=0.5;mx+=0.5}
+    const pad=(mx-mn)*0.12,lo=mn-pad,hi=mx+pad,base=Ht-B;
+    const xs=s.map((_,i)=>L+(W-L-R)*(n>1?i/(n-1):0.5)),ys=vs.map(v=>T+(base-T)*(1-(v-lo)/(hi-lo)));
+    CH[c]={s,xs,ys};
+    const line=smooth(xs.map((x,i)=>[x,ys[i]]));
+    let grid="";
+    for(let k=0;k<4;k++){const v=lo+(hi-lo)*k/3,y=T+(base-T)*(1-k/3);
+      grid+=`<line x1="${L}" x2="${W-R}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--bd)" stroke-width=".6"/><text x="${W-R+5}" y="${(y+3).toFixed(1)}" font-size="10" fill="var(--mu)">${v.toFixed(2)}</text>`}
+    const K=n<2?1:(P<=7?Math.min(n,4):5);let ticks="";
+    for(let k=0;k<K;k++){const i=K>1?Math.round(k*(n-1)/(K-1)):0,[yy,mm,dd]=s[i][0].split("-");
+      const lab=P<=90?`${dd}.${mm}`:`${MON[+mm-1]} ${yy.slice(2)}`,x=xs[i].toFixed(1);
+      ticks+=`<line x1="${x}" x2="${x}" y1="${base}" y2="${base+4}" stroke="var(--mu)" stroke-width=".6"/><text x="${x}" y="${Ht-7}" font-size="10" text-anchor="${k==0?"start":k==K-1?"end":"middle"}" fill="var(--mu)">${lab}</text>`}
     const ch=vs[n-1]-vs[0],pc=ch/vs[0]*100;
     h+=`<div class="card ch"><div class="hd"><b>${names[c]}</b><span><b>${f(vs[n-1])} ₽</b> <span class="${ch>0?"pos":ch<0?"neg":""}">${ch>=0?"+":""}${ch.toFixed(2)} (${pc.toFixed(1)}%)</span></span></div>
     <div class="mu" id="i_${c}">${dfmt(s[0][0])} — ${dfmt(s[n-1][0])} · мин ${f(Math.min(...vs))} · макс ${f(Math.max(...vs))}</div>
-    <svg viewBox="0 0 ${W} ${Ht}" data-c="${c}"><path d="${d}L${X(n-1).toFixed(1)} ${Ht-B}L${X(0).toFixed(1)} ${Ht-B}Z" fill="${col[c]}" opacity=".12"/>
-    <path d="${d}" fill="none" stroke="${col[c]}" stroke-width="2" stroke-linejoin="round"/>
-    <line id="l_${c}" y1="${T}" y2="${Ht-B}" stroke="var(--mu)" stroke-dasharray="3" visibility="hidden"/><circle id="o_${c}" r="4" fill="${col[c]}" visibility="hidden"/>
-    <text x="${L}" y="${Ht-6}" font-size="10" fill="var(--mu)">${dfmt(s[0][0]).slice(0,5)}</text><text x="${W-R}" y="${Ht-6}" font-size="10" text-anchor="end" fill="var(--mu)">${dfmt(s[n-1][0]).slice(0,5)}</text></svg></div>`;
+    <svg viewBox="0 0 ${W} ${Ht}" data-c="${c}"><defs><linearGradient id="g_${c}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col[c]}" stop-opacity=".32"/><stop offset="1" stop-color="${col[c]}" stop-opacity="0"/></linearGradient></defs>
+    ${grid}<path d="${line}L${xs[n-1].toFixed(1)} ${base}L${xs[0].toFixed(1)} ${base}Z" fill="url(#g_${c})"/>
+    <path d="${line}" fill="none" stroke="${col[c]}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    ${ticks}<circle cx="${xs[n-1].toFixed(1)}" cy="${ys[n-1].toFixed(1)}" r="3" fill="${col[c]}"/>
+    <line id="l_${c}" y1="${T}" y2="${base}" stroke="var(--mu)" stroke-width=".8" stroke-dasharray="3" visibility="hidden"/><circle id="o_${c}" r="4" fill="${col[c]}" stroke="var(--card)" stroke-width="1.5" visibility="hidden"/></svg></div>`;
   }
   el.innerHTML=h+'<div class="mu">Проведите пальцем по графику, чтобы увидеть курс на дату.</div>';
   el.querySelectorAll("svg").forEach(sv=>{
-    const c=sv.dataset.c,s=CH[c],n=s.length;
-    const mv=e=>{const r=sv.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*W;
-      const i=Math.max(0,Math.min(n-1,Math.round((px-L)/(W-L-R)*(n-1))));
-      const vs=s.map(p=>p[1]);let mn=Math.min(...vs),mx=Math.max(...vs);if(mx-mn<0.01){mn-=0.5;mx+=0.5}const pad=(mx-mn)*0.08;mn-=pad;mx+=pad;
-      const x=L+(W-L-R)*(n>1?i/(n-1):0.5),y=T+(Ht-T-B)*(1-(s[i][1]-mn)/(mx-mn));
-      const ln=$("l_"+c),o=$("o_"+c);ln.setAttribute("x1",x);ln.setAttribute("x2",x);ln.setAttribute("visibility","visible");
-      o.setAttribute("cx",x);o.setAttribute("cy",y);o.setAttribute("visibility","visible");
+    const c=sv.dataset.c,{s,xs,ys}=CH[c];
+    const mv=e=>{const r=sv.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W;
+      let i=0,b=1e9;xs.forEach((x,j)=>{const q=Math.abs(x-px);if(q<b){b=q;i=j}});
+      const ln=$("l_"+c),o=$("o_"+c);ln.setAttribute("x1",xs[i]);ln.setAttribute("x2",xs[i]);ln.setAttribute("visibility","visible");
+      o.setAttribute("cx",xs[i]);o.setAttribute("cy",ys[i]);o.setAttribute("visibility","visible");
       $("i_"+c).textContent=dfmt(s[i][0])+" · "+f(s[i][1])+" ₽"};
     sv.addEventListener("pointermove",mv);sv.addEventListener("pointerdown",mv);
   });
