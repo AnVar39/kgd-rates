@@ -1,0 +1,192 @@
+name: build-apk
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - run: pip install pillow
+      - name: Generate Android project
+        run: |
+          set -e
+          A=android/app/src/main
+          mkdir -p $A/java/ru/kgd/rates $A/res/values $A/res/mipmap-anydpi-v26 $A/res/drawable-nodpi
+
+          cat > android/settings.gradle <<'EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+          rootProject.name = "kgd-rates"
+          include ':app'
+          EOF
+
+          cat > android/build.gradle <<'EOF'
+          plugins { id 'com.android.application' version '8.5.2' apply false }
+          EOF
+
+          cat > android/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx2048m
+          android.nonTransitiveRClass=true
+          EOF
+
+          cat > android/app/build.gradle <<'EOF'
+          plugins { id 'com.android.application' }
+          android {
+              namespace 'ru.kgd.rates'
+              compileSdk 34
+              defaultConfig {
+                  applicationId 'ru.kgd.rates'
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName '1.0'
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          EOF
+
+          cat > $A/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <application
+                  android:label="@string/app_name"
+                  android:icon="@mipmap/ic_launcher"
+                  android:roundIcon="@mipmap/ic_launcher_round"
+                  android:theme="@style/AppTheme"
+                  android:allowBackup="true"
+                  android:usesCleartextTraffic="false">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|uiMode">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          cat > $A/java/ru/kgd/rates/MainActivity.java <<'EOF'
+          package ru.kgd.rates;
+
+          import android.app.Activity;
+          import android.content.Intent;
+          import android.graphics.Color;
+          import android.net.Uri;
+          import android.os.Bundle;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+
+          public class MainActivity extends Activity {
+              static final String HOME = "https://anvar39.github.io/kgd-rates/";
+              WebView web;
+
+              @Override
+              protected void onCreate(Bundle b) {
+                  super.onCreate(b);
+                  web = new WebView(this);
+                  web.setBackgroundColor(Color.parseColor("#10131a"));
+                  setContentView(web);
+                  WebSettings s = web.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  s.setAllowFileAccess(false);
+                  web.setWebViewClient(new WebViewClient() {
+                      @Override
+                      public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
+                          Uri u = r.getUrl();
+                          if ("anvar39.github.io".equals(u.getHost())) return false;
+                          startActivity(new Intent(Intent.ACTION_VIEW, u));
+                          return true;
+                      }
+                  });
+                  if (b != null) web.restoreState(b); else web.loadUrl(HOME);
+              }
+
+              @Override
+              protected void onSaveInstanceState(Bundle o) {
+                  super.onSaveInstanceState(o);
+                  web.saveState(o);
+              }
+
+              @Override
+              public void onBackPressed() {
+                  if (web.canGoBack()) web.goBack(); else super.onBackPressed();
+              }
+          }
+          EOF
+
+          cat > $A/res/values/strings.xml <<'EOF'
+          <resources><string name="app_name">Курсы КГД</string></resources>
+          EOF
+
+          cat > $A/res/values/colors.xml <<'EOF'
+          <resources><color name="ic_bg">#10131a</color></resources>
+          EOF
+
+          cat > $A/res/values/styles.xml <<'EOF'
+          <resources>
+              <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+                  <item name="android:windowBackground">@color/ic_bg</item>
+                  <item name="android:statusBarColor">@color/ic_bg</item>
+                  <item name="android:navigationBarColor">@color/ic_bg</item>
+              </style>
+          </resources>
+          EOF
+
+          for n in ic_launcher ic_launcher_round; do
+          cat > $A/res/mipmap-anydpi-v26/$n.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_bg"/>
+              <foreground android:drawable="@drawable/ic_fg"/>
+          </adaptive-icon>
+          EOF
+          done
+
+          python3 - <<'EOF'
+          import os
+          from PIL import Image
+          em = Image.open("icons/emblem.png").convert("RGBA")
+          def put(size, ratio, transparent):
+              c = Image.new("RGBA", (size, size), (0, 0, 0, 0) if transparent else (16, 19, 26, 255))
+              h = int(size * ratio); w = int(em.width * h / em.height)
+              c.alpha_composite(em.resize((w, h), Image.LANCZOS), ((size - w) // 2, (size - h) // 2))
+              return c
+          R = "android/app/src/main/res/"
+          for d, s in {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}.items():
+              os.makedirs(R + "mipmap-" + d, exist_ok=True)
+              for n in ("ic_launcher", "ic_launcher_round"):
+                  put(s, 0.82, False).save(R + "mipmap-" + d + "/" + n + ".png")
+          put(432, 0.5, True).save(R + "drawable-nodpi/ic_fg.png")
+          EOF
+      - name: Build APK
+        run: gradle -p android assembleDebug --no-daemon
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk kgd-rates.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kgd-rates-apk
+          path: kgd-rates.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: Курсы КГД (APK)
+          files: kgd-rates.apk
+          make_latest: true
