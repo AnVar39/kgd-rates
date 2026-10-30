@@ -141,15 +141,45 @@ def append_today(cbr_now):
                 h[c].sort()
     return h
 
+def load_prev():
+    try:
+        return json.load(open(OUT, encoding="utf-8"))
+    except Exception:
+        return {}
+
+def sane(banks, cbr_now, tol=0.15):
+    """Отбрасываем явные ошибки парсинга: курс банка далеко от курса ЦБ или покупка > продажи."""
+    out = []
+    for b in banks:
+        for c in ("USD", "EUR"):
+            r, ref = b.get(c), cbr_now.get(c)
+            if not r:
+                continue
+            bad = r["buy"] > r["sell"] * 1.02
+            if ref:
+                bad = bad or any(abs(r[k] - ref) / ref > tol for k in ("buy", "sell"))
+            if bad:
+                b.pop(c)
+        if b.get("USD") or b.get("EUR"):
+            out.append(b)
+    return out
+
 def main():
+    prev = load_prev()
     data = {"updated": dt.datetime.now(dt.timezone.utc).isoformat(), "cbr": {}, "banks": [], "errors": []}
     try:
         data["cbr"] = cbr()
     except Exception as e:
         data["errors"].append(f"cbr: {e}")
-    data["banks"] = sorted(collect(data["errors"]), key=lambda x: x["name"])
-    if not data["banks"]:
-        data["errors"].append("банки не найдены — проверьте парсер")
+        data["cbr"] = prev.get("cbr", {})
+    banks = sane(collect(data["errors"]), data["cbr"])
+    if banks:
+        data["banks"] = sorted(banks, key=lambda x: x["name"])
+        data["banks_updated"] = data["updated"]
+    else:
+        data["errors"].append("банки не найдены — показаны последние сохранённые данные")
+        data["banks"] = prev.get("banks", [])
+        data["banks_updated"] = prev.get("banks_updated") or prev.get("updated")
     try:
         h = history()
     except Exception as e:
