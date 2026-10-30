@@ -1,165 +1,1045 @@
-<!doctype html>
-<html lang="ru"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Курсы валют · Калининград</title>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" href="icons/icon-192.png">
-<meta name="theme-color" content="#1a6ef0">
+<meta name="theme-color" content="#0e1621">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Курсы КГД">
+<meta name="apple-mobile-web-app-title" content="Навигация">
+<title>Навигация</title>
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--tx:#14181f;--mu:#66707f;--ac:#1a6ef0;--ok:#0a8a4a;--okbg:#e3f6ec;--bd:#e2e5ea}
-@media(prefers-color-scheme:dark){:root{--bg:#10131a;--card:#1a1f29;--tx:#eef1f5;--mu:#8e98a8;--ac:#5b9bff;--ok:#3ddc84;--okbg:#14301f;--bd:#2a3140}}
-*{box-sizing:border-box}body{margin:0 auto;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif;max-width:720px;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom))}
-header{display:flex;align-items:center;justify-content:space-between;gap:10px}header img{height:56px;flex:none}h1{font-size:19px;margin:0;flex:1}
-.tabs{display:flex;gap:8px;margin:12px 0}
-.tabs button{flex:1;padding:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit}
-.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
-.big{font-size:26px;font-weight:700}.mu{color:var(--mu);font-size:13px}.ok{color:var(--ok);font-weight:600}
-.row{display:flex;justify-content:space-between;gap:8px;padding:6px 0}
-.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}th:first-child,td:first-child{text-align:left;white-space:normal}
-th{cursor:pointer;user-select:none}th.on{color:var(--ac)}
-tr.best{background:var(--okbg)}td.g{color:var(--ok);font-weight:700}
-.lk{color:var(--ac);text-decoration:underline;cursor:pointer}#md{position:fixed;inset:0;background:#0009;display:flex;align-items:flex-end;justify-content:center;z-index:9}#md[hidden]{display:none}.mb{background:var(--card);width:100%;max-width:720px;max-height:82vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}.mb h2{margin:0 0 4px;font-size:18px}.br{padding:10px 0;border-bottom:1px solid var(--bd)}.br a{font-size:13px}#mc{float:right;border:0;background:none;color:var(--tx);font-size:22px}.chips{display:flex;gap:6px;margin:4px 0 10px}.chips button{flex:1;padding:8px 2px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;font-size:13px}.chips button.on{background:var(--ac);color:#fff;border-color:var(--ac)}.ch svg{width:100%;height:auto;display:block;touch-action:pan-y}.ch .hd{display:flex;justify-content:space-between;align-items:baseline}.pos{color:var(--ok)}.neg{color:#d64545}.dl{font-size:15px;font-weight:600;margin-left:4px}.err{color:#c0392b;font-size:13px}#inst{display:none;margin-top:8px;padding:8px 12px;border-radius:10px;border:0;background:var(--ac);color:#fff;font:inherit}
-</style></head><body>
-<header><h1>Курсы валют · Калининград</h1><img src="coat.png" alt="Герб Калининграда"></header>
-<div class="mu" id="upd">Загрузка…</div><button id="inst">Установить приложение</button>
-<div class="tabs"><button id="t1" class="on">Главная</button><button id="t2">Все банки</button></div>
-<div id="v1"></div><div id="v2" hidden></div><div class="err" id="err"></div>
-<div id="md" hidden><div class="mb"><button id="mc">✕</button><div id="mh"></div></div></div>
-<script>
-const $=id=>document.getElementById(id);
-const f=x=>x==null?"—":x.toFixed(2);
-const names={USD:"Доллар США",EUR:"Евро"};
-const COLS=[["USD","buy","$ покупка"],["USD","sell","$ продажа"],["EUR","buy","€ покупка"],["EUR","sell","€ продажа"]];
-let D=null,key="name",dir=1;
-const val=(b,c,t)=>b[c]?b[c][t]:null;
-const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
-const lk=b=>b?`<a class="lk" data-i="${D.banks.indexOf(b)}">${esc(b.name)}</a>`:"—";
-function best(banks,c){
-  const a=banks.filter(b=>b[c]);if(!a.length)return {};
-  return {sell:a.reduce((m,b)=>b[c].buy>m[c].buy?b:m),buy:a.reduce((m,b)=>b[c].sell<m[c].sell?b:m)};
+:root{--bg:#f4f6f9;--card:#fff;--tx:#14202e;--mut:#5d6b7c;--ac:#0b63c5;--bd:#d5dce5;--ok:#0a7a45;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1621;--card:#17212f;--tx:#e8eef6;--mut:#93a2b5;--ac:#5aa6ff;--bd:#2b394b;--ok:#4cd391}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,Roboto,sans-serif;padding:12px}
+h1{font-size:20px;margin:4px 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
+.card h2{font-size:14px;margin:0 0 8px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 2px}
+input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font-size:16px}
+.row{display:flex;gap:8px}.row>div{flex:1;min-width:0}
+.c3{display:flex;gap:6px}.c3 input{flex:1.2}.c3 select{flex:1;padding-left:6px;padding-right:2px}
+button{width:100%;padding:12px;border:0;border-radius:10px;background:var(--ac);color:#fff;font-size:16px;font-weight:600;margin-top:10px}
+button.sec{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+table{width:100%;border-collapse:collapse}td{padding:5px 0;border-bottom:1px solid var(--bd);vertical-align:top}td:last-child{text-align:right;font-variant-numeric:tabular-nums;padding-left:8px}
+td.h{font-weight:700;color:var(--ac);padding-top:12px;text-align:left;border-bottom:2px solid var(--ac)}
+.big{font-size:28px;font-weight:700;color:var(--ok);text-align:center;margin:6px 0}
+.note{font-size:13px;color:var(--mut);margin-top:6px}
+.err{color:#d33}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tab{margin:0;padding:10px 6px;background:var(--card);color:var(--tx);border:1px solid var(--bd);font-size:14px}
+.lbl{font-size:12px;color:var(--mut);text-align:center;text-transform:uppercase;letter-spacing:.05em}
+.big2{font-size:34px;font-weight:800;color:var(--ok);text-align:center;margin:2px 0 14px;line-height:1.15}
+.tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+[hidden]{display:none!important}
+.tab{flex:1 1 0;font-size:13px;padding:8px 4px}
+.tabs{gap:4px}
+.tabs{flex-wrap:wrap}.tab{flex:1 1 45%}
+@media (min-width:600px){
+ body{max-width:1280px;margin:0 auto}
+ #t1wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+ #t1res{order:1;position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto}
+ #t1in{order:2}
+ #t1res .wideonly{display:block}
 }
-function winner(banks){
-  const sc=new Map(banks.map(b=>[b.name,0]));
-  COLS.filter(x=>x[1]==="buy").forEach(([c,t])=>{
-    const v=banks.map(b=>val(b,c,t)).filter(x=>x!=null);if(!v.length)return;
-    const m=Math.max(...v);banks.forEach(b=>{if(val(b,c,t)===m)sc.set(b.name,sc.get(b.name)+1)});
-  });
-  return banks.slice().sort((a,b)=>sc.get(b.name)-sc.get(a.name)||(val(b,"USD","buy")||0)-(val(a,"USD","buy")||0))[0];
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark}}
+input::-webkit-calendar-picker-indicator{opacity:1;cursor:pointer}
+.seg{display:none}
+@media (max-width:599px){
+ .seg{display:flex;gap:6px;margin-bottom:10px}
+ .seg button{margin:0;padding:9px 6px;font-size:14px;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+ .seg button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+ #t1wrap{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;align-items:flex-start}
+ #t1res,#t1in{flex:0 0 100%;min-width:0;scroll-snap-align:start}
+ #t1res{order:1}#t1in{order:2}
 }
-function render2(){
-  const banks=D.banks.slice();if(!banks.length){$("v2").innerHTML='<div class="card mu">Нет данных</div>';return}
-  const w=winner(banks);
-  const ext={};COLS.forEach(([c,t])=>{const v=banks.map(b=>val(b,c,t)).filter(x=>x!=null);ext[c+t]=v.length?(t==="buy"?Math.max(...v):Math.min(...v)):null});
-  banks.sort((a,b)=>{
-    if(key==="name")return dir*a.name.localeCompare(b.name,"ru");
-    const [c,t]=key.split(".");const x=val(a,c,t),y=val(b,c,t);
-    if(x==null)return 1;if(y==null)return -1;return dir*(x-y);
-  });
-  const arrow=k=>key===k?(dir>0?" ▲":" ▼"):"";
-  let h='<div class="card wrap"><table><tr><th data-k="name" class="'+(key==="name"?"on":"")+'">Банк'+arrow("name")+'</th>'+
-   COLS.map(([c,t,l])=>{const k=c+"."+t;return `<th data-k="${k}" class="${key===k?"on":""}">${l}${arrow(k)}</th>`}).join("")+"</tr>";
-  banks.forEach(b=>{
-    h+=`<tr class="${b===w?"best":""}"><td>${b===w?"★ ":""}${lk(b)}</td>`+COLS.map(([c,t])=>{const v=val(b,c,t);return `<td class="${t==="buy"&&v!=null&&v===ext[c+t]?"g":""}">${f(v)}</td>`}).join("")+"</tr>";
-  });
-  $("v2").innerHTML=h+`</table><div class="mu">Нажмите на заголовок столбца — сортировка по возрастанию/убыванию. Зелёная строка (★) — банк с лучшей ценой покупки: он больше всех платит за ваши доллары и евро; зелёные цифры — максимальный курс покупки в столбце. Покупка — банк покупает у вас, продажа — банк продаёт вам.</div></div>`;
-  $("v2").querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(key===k)dir=-dir;else{key=k;dir=1}render2()});
-}
-function cbrDelta(c){
-  if(!H||!D||!D.cbr[c]||!D.cbr.date)return"";
-  const t=D.cbr.date.split(".").reverse().join("-");
-  const prev=[...(H[c]||[])].reverse().find(p=>p[0]<t);
-  if(!prev)return"";
-  const r=Math.round((D.cbr[c]-prev[1])*100)/100;
-  return ` <span class="dl ${r>0?"pos":r<0?"neg":""}">(${r>0?"+":r<0?"−":""}${Math.abs(r).toFixed(2)})</span>`;
-}
-function render1(){
-  let h="";
-  for(const c of["USD","EUR"]){
-    const b=best(D.banks,c),cb=D.cbr[c];
-    h+=`<div class="card"><b>${names[c]}</b>
-    <div class="row"><span>Курс ЦБ${D.cbr.date?" ("+D.cbr.date+")":""}</span><span><span class="big">${f(cb)} ₽</span>${cbrDelta(c)}</span></div>
-    <div class="row"><span>Продать выгоднее: <span class="mu">${lk(b.sell)}</span></span><span class="ok">${f(b.sell&&b.sell[c].buy)} ₽</span></div>
-    <div class="row"><span>Купить выгоднее: <span class="mu">${lk(b.buy)}</span></span><span class="ok">${f(b.buy&&b.buy[c].sell)} ₽</span></div></div>`;
-  }
-  $("v1").innerHTML=h+`<div class="mu">«Продать» — банк покупает у вас валюту (макс. курс). «Купить» — банк продаёт вам (мин. курс).</div><h2 style="font-size:17px;margin:18px 0 8px">Динамика курса ЦБ</h2><div id="charts"></div>`;
-  renderCharts();
-}
-fetch("data/rates.json?"+Date.now()).then(r=>r.json()).then(d=>{
-  D=d;$("upd").textContent="Обновлено: "+(d.updated?new Date(d.updated).toLocaleString("ru-RU"):"нет данных");
-  $("err").textContent=(d.errors||[]).join("; ");render1();render2();
-}).catch(e=>$("err").textContent="Ошибка загрузки: "+e);
-$("t1").onclick=()=>{$("v1").hidden=false;$("v2").hidden=true;$("t1").className="on";$("t2").className=""};
-$("t2").onclick=()=>{$("v1").hidden=true;$("v2").hidden=false;$("t2").className="on";$("t1").className=""};
+@media (min-width:600px){.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}}
+.row{align-items:flex-end}
+input,select{height:48px}
+.menu{position:sticky;top:0;z-index:40;margin:0 0 12px;padding:4px 0;background:var(--bg)}
+#menuBtn{margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;font-size:15px;padding:12px 14px}
+.tabs{display:none;flex-direction:column;flex-wrap:nowrap;gap:4px;position:absolute;left:0;right:0;top:calc(100% + 2px);margin:0;padding:6px;background:var(--card);border:1px solid var(--bd);border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.4);max-height:75vh;overflow:auto}
+.tabs.open{display:flex}
+.tab{flex:none;text-align:left;font-size:15px;padding:12px}
+</style>
+</head>
+<body>
+<div class="menu" id="menu"><button id="menuBtn" aria-haspopup="true"><span id="menuLbl">🧭 Расчёт поправки компаса</span><span>▾</span></button><div class="tabs" id="tabsMenu"><button class="tab on" data-t="t1">🧭 Расчёт поправки компаса</button><button class="tab" data-t="t2">🚢 Расчёт ETA</button><button class="tab" data-t="t3">🌊 Приливы</button><button class="tab" data-t="t4">📖 Таблицы ATT</button><button class="tab" data-t="t6">🌟 Азимуты светил</button><button class="tab" data-t="t5">⚖️ Расчёт метацентрической высоты по периоду качки</button></div></div>
+<section id="t1"><div class="seg" id="t1seg"><button data-p="res">📊 Результат</button><button data-p="in" class="on">✏️ Ввод данных</button></div><div id="t1wrap"><div id="t1in">
 
-let H=null,P=30,CH={};
-const PER=[[7,"7 дн."],[30,"1 мес."],[90,"3 мес."],[180,"6 мес."],[365,"1 год"]];
-const dfmt=s=>s.split("-").reverse().join(".");
-const MON=["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
-function smooth(p){
-  const n=p.length,F=v=>v.toFixed(1);
-  if(n<3)return p.map((q,i)=>(i?"L":"M")+F(q[0])+" "+F(q[1])).join("");
-  const dx=[],m=[];for(let i=0;i<n-1;i++){dx[i]=p[i+1][0]-p[i][0];m[i]=(p[i+1][1]-p[i][1])/dx[i]}
-  const t=[m[0]];for(let i=1;i<n-1;i++)t[i]=m[i-1]*m[i]<=0?0:(m[i-1]+m[i])/2;t[n-1]=m[n-2];
-  let d="M"+F(p[0][0])+" "+F(p[0][1]);
-  for(let i=0;i<n-1;i++){const k=dx[i]/3;d+="C"+F(p[i][0]+k)+" "+F(p[i][1]+t[i]*k)+" "+F(p[i+1][0]-k)+" "+F(p[i+1][1]-t[i+1]*k)+" "+F(p[i+1][0])+" "+F(p[i+1][1])}
-  return d;
+<div class="card">
+<h2>Координаты</h2>
+<label>Широта φ: градусы, минуты и десятые, N/S</label>
+<div class="c3"><input id="lad" inputmode="numeric" placeholder="град"><input id="lam" inputmode="decimal" placeholder="мин.м"><select id="las"><option>N</option><option>S</option></select></div>
+<label>Долгота λ: градусы, минуты и десятые, E/W</label>
+<div class="c3"><input id="lod" inputmode="numeric" placeholder="град"><input id="lom" inputmode="decimal" placeholder="мин.м"><select id="los"><option>E</option><option>W</option></select></div>
+<button class="sec" id="gps">📍 Взять координаты с GPS</button>
+<div class="note" id="gpsmsg"></div>
+</div>
+
+<div class="card">
+<h2>Дата и время</h2>
+<label>Дата (по часам)</label>
+<input id="date" type="date">
+<div class="row">
+<div><label>Время по часам</label><input id="time" type="time" step="1"></div>
+<div><label>Часовой пояс, E/W</label><div class="c3"><input id="zn" inputmode="decimal" placeholder="№"><select id="zs"><option>E</option><option>W</option></select></div></div>
+</div>
+<button class="sec" id="now">🕒 Текущие дата и время устройства</button>
+<div class="note">Пояс E: UTC = время − №; пояс W: UTC = время + №.</div>
+</div>
+
+<div class="card">
+<h2>Наблюдение</h2>
+<label>Светило</label>
+<select id="body"></select>
+<label>Измеренный компасный пеленг КП (0–360°)</label>
+<input id="kp" inputmode="decimal" placeholder="например 98.5">
+<div class="row">
+<div style="flex:0 0 auto;min-width:max-content"><label>Тип компаса</label><select id="ctype" style="width:auto"><option value="mag">Магнитный</option><option value="gyro">Гирокомпас</option></select></div>
+<div style="flex:1"><label>Магн. склонение d, необяз.</label><div class="c3"><input id="var" inputmode="decimal" placeholder="0.0"><select id="vars"><option>E</option><option>W</option></select></div></div>
+</div>
+<label>Высота глаза над водой, м (необяз.)</label>
+<input id="eye" inputmode="decimal" placeholder="для наклонения горизонта">
+<button id="calc">Рассчитать</button>
+</div>
+
+</div><div id="t1res"><div class="card wideonly" id="ph"><h2>Результат</h2><div class="note">Результат расчёта появится здесь. Введите данные справа и нажмите «Рассчитать».</div></div>
+<div class="card" id="out" hidden>
+<h2>Результат</h2>
+<div class="big" id="dk"></div>
+<div class="note" id="dkl" style="text-align:center"></div>
+<table id="tb"></table>
+<div class="note" id="warn"></div>
+</div>
+
+<div class="note">Данные МАЕ и МТ вычисляются внутри приложения теми же величинами, что в таблицах (GHA, Dec, d, SHA, SD, ур. времени, амплитуда, рефракция, параллакс, наклонение). Солнце ≈ ±0,01°. Звёзды: координаты J2000 + собственное движение, прецессия, нутация и аберрация — SHA и Dec считаются на любую дату. Для ответственных случаев сверяйте с печатным МАЕ. Луна и планеты не включены.</div>
+
+</div>
+</div>
+</section>
+
+<section id="t2" hidden>
+<div class="duo">
+<div class="card">
+<h2>Отход</h2>
+<label>Дата отхода (местная)</label>
+<input id="tdate" type="date">
+<div class="row">
+<div><label>Время отхода (местное)</label><input id="ttime" type="time"></div>
+<div><label>Часовой пояс, E/W</label><div class="c3"><select id="tzn"></select><select id="tzs"><option>E</option><option>W</option></select></div></div>
+</div>
+</div>
+<div class="card">
+<h2>Приход</h2>
+<label>Дата прихода (местная)</label>
+<input id="sdate" type="date">
+<div class="row">
+<div><label>Время прихода (местное)</label><input id="stime" type="time"></div>
+<div><label>Часовой пояс порта прихода, E/W</label><div class="c3"><select id="azn"></select><select id="azs"><option>E</option><option>W</option></select></div></div>
+</div>
+</div>
+</div>
+<div class="card">
+<h2>Переход</h2>
+<div class="row">
+<div><label>Расстояние, мили</label><input id="dist" inputmode="decimal" placeholder="500"></div>
+<div><label>Скорость, узлы</label><input id="spd" inputmode="decimal" placeholder="12"></div>
+</div>
+<div class="note">Расчёт идёт автоматически. Заданы дата и время прихода: считается скорость. Дата прихода не задана, но есть скорость: считается ETA.</div>
+<div class="note err" id="terr"></div>
+</div>
+<div class="card" id="tout" hidden>
+<h2 id="thead">Результат</h2>
+<div id="sblk"><div class="lbl">Требуемая скорость</div><div class="big2" id="tspd"></div></div>
+<div class="lbl">Время в пути</div><div class="big2" id="tdur"></div>
+<div class="lbl">Дата прибытия</div><div class="big2" id="tadate"></div>
+<div class="lbl">Время прибытия (местное)</div><div class="big2" id="tatime"></div>
+<table id="ttb"></table>
+<div class="note" id="twarn"></div>
+</div>
+<div class="note">Все расчёты идут через UTC. Пояс E: UTC = местное − №; пояс W: UTC = местное + №. Летнее время не учитывается — введите фактический пояс судового времени.</div>
+</section>
+
+<section id="t3" hidden>
+<div class="card">
+<h2>Порт из офлайн-базы</h2>
+<label>Название порта или страны (по-русски или латиницей)</label>
+<input id="dbq" placeholder="например Роттердам, Southampton или Япония">
+<div class="row">
+<div><button class="sec" id="dbfind">🔎 Найти</button></div>
+<div><button class="sec" id="dbnear">📍 Ближайшие</button></div>
+</div>
+<select id="dbres" hidden style="margin-top:8px"></select>
+<div class="note" id="dbinfo"></div>
+<div class="note">Работает без интернета: приливы считаются по гармоническим константам (8,6 тыс. станций мира). «Ближайшие» берёт координаты из блока «Порт» ниже (кнопка GPS). Ниже выберите дату, пояс и момент, прогноз пересчитается сам.</div>
+<div class="note" id="dbattr" style="font-size:11px">Данные: NOAA (общественное достояние); TICON-4: Hart-Davis, Dettmering, Seitz (2025), SEANOE, doi:10.17882/109129, CC BY 4.0; LINZ, Kartverket, DMI, JHOD. Сборка: Slackwater database (github.com/openwatersio/slackwater-database). Часть станций CC BY-NC: только некоммерческое использование.</div>
+</div>
+<div class="card">
+<h2>Порт</h2>
+<label>Название порта (поиск по всему миру)</label>
+<input id="pname" placeholder="например, Rotterdam или Владивосток">
+<button class="sec" id="psearch">🔎 Найти порт</button>
+<select id="pres" hidden style="margin-top:8px"></select>
+<label>Широта φ: градусы, минуты и десятые, N/S</label>
+<div class="c3"><input id="pld" inputmode="numeric" placeholder="град"><input id="plm" inputmode="decimal" placeholder="мин.м"><select id="pls"><option>N</option><option>S</option></select></div>
+<label>Долгота λ: градусы, минуты и десятые, E/W</label>
+<div class="c3"><input id="pnd" inputmode="numeric" placeholder="град"><input id="pnm" inputmode="decimal" placeholder="мин.м"><select id="pns"><option>E</option><option>W</option></select></div>
+<button class="sec" id="pgps">📍 Взять координаты с GPS</button>
+<div class="note" id="pmsg"></div>
+</div>
+<div class="card">
+<h2>Прогноз приливов и отливов</h2>
+<div class="row">
+<div><label>Дата начала (местная)</label><input id="pdate" type="date"></div>
+<div><label>Сколько суток</label><select id="pdays"><option>1</option><option selected>2</option><option>3</option><option>7</option></select></div>
+</div>
+<div class="row">
+<div><label>Момент для высоты воды</label><input id="ptime" type="time"></div>
+<div><label>Часовой пояс, E/W</label><div class="c3"><select id="pzn"></select><select id="pzs"><option>E</option><option>W</option></select></div></div>
+</div>
+<button id="pgo">Получить прогноз</button>
+<div class="note err" id="pmsg2"></div>
+</div>
+<div class="card" id="pout" hidden>
+<h2>Результат</h2>
+<div class="lbl">Высота воды в выбранный момент</div><div class="big2" id="phh"></div>
+<div class="note" id="phd" style="text-align:center"></div>
+<table id="ptb"></table>
+</div>
+<div class="note">Прогноз глобальной модели (сетка ≈ 8 км), высота относительно среднего уровня моря (не от нуля глубин карты). В узких заливах и у берега возможны ошибки времени и высоты — для навигации используйте официальные таблицы приливов. Данные: Open-Meteo Marine (DWD, CC BY 4.0). Нужен интернет.</div>
+<div class="card" style="margin-top:12px">
+<h2>Расчёт по таблицам (без интернета)</h2>
+<div class="note" style="margin-top:0">Введите два соседних события из таблиц приливов (ПВ и МВ, в любом порядке) в одном поясе времени.</div>
+<div class="row">
+<div><label>Событие 1: время</label><input id="m1t" type="time"></div>
+<div><label>Высота, м</label><input id="m1h" inputmode="decimal"></div>
+</div>
+<div class="row">
+<div><label>Событие 2: время</label><input id="m2t" type="time"></div>
+<div><label>Высота, м</label><input id="m2h" inputmode="decimal"></div>
+</div>
+<div class="row">
+<div><label>Момент: время</label><input id="mxt" type="time"></div>
+<div><label>Нужная высота, м</label><input id="mxh" inputmode="decimal"></div>
+</div>
+<div class="note err" id="merr"></div>
+<div id="mout" hidden>
+<div class="lbl">Высота в заданный момент</div><div class="big2" id="mh"></div>
+<div class="lbl">Время достижения нужной высоты</div><div class="big2" id="mtm"></div>
+</div>
+<div class="note">Метод косинусоиды (как в таблицах приливов Адмиралтейства): h = ½(h₁ + h₂) + ½(h₁ − h₂)·cos(π·t/Δ).</div>
+</div>
+<div class="card"><h2>График уровня воды</h2><div id="pch"></div><div class="note" id="pchn">График появится после получения прогноза (или после ввода ПВ и МВ в расчёте по таблицам).</div></div>
+</section>
+
+<section id="t4" hidden>
+<div class="card">
+<h2>Режим</h2>
+<select id="amode"><option value="std">Основной порт (ATT, часть I)</option><option value="sec">Вторичный порт (ATT, часть II)</option></select>
+<button class="sec" id="aex">Заполнить условный пример</button>
+<div class="note">Данные портов (ПВ/МВ, уровни, разности) берутся из таблиц приливов Адмиралтейства (ATT) на нужную дату. Все времена и высоты вводятся в том же поясе и от того же нуля глубин.</div>
+</div>
+<div class="card">
+<h2>Основной порт: ПВ и МВ на дату</h2>
+<div class="row">
+<div><label>ПВ: время</label><input id="eht" type="time"></div>
+<div><label>ПВ: высота, м</label><input id="ehh" inputmode="decimal"></div>
+</div>
+<div class="row">
+<div><label>МВ: время</label><input id="elt" type="time"></div>
+<div><label>МВ: высота, м</label><input id="elh" inputmode="decimal"></div>
+</div>
+<div class="note">Введите соседние ПВ и МВ, между которыми лежит нужный момент.</div>
+<label>Средние уровни основного порта, м (MHWS, MHWN, MLWN, MLWS)</label>
+<div class="row">
+<div><input id="sa1" inputmode="decimal" placeholder="MHWS"></div>
+<div><input id="sa2" inputmode="decimal" placeholder="MHWN"></div>
+</div>
+<div class="row" style="margin-top:8px">
+<div><input id="sa3" inputmode="decimal" placeholder="MLWN"></div>
+<div><input id="sa4" inputmode="decimal" placeholder="MLWS"></div>
+</div>
+</div>
+<div class="card" id="asec" hidden>
+<h2>Вторичный порт: разности из ATT</h2>
+<label>Разности времени для ПВ: время в основном порту и разность (±ччмм)</label>
+<div class="row"><div><input id="hra" type="time"></div><div><input id="hrad" placeholder="+0120"></div></div>
+<div class="row" style="margin-top:8px"><div><input id="hrb" type="time"></div><div><input id="hrbd" placeholder="+0100"></div></div>
+<label>Разности времени для МВ</label>
+<div class="row"><div><input id="lra" type="time"></div><div><input id="lrad" placeholder="+0110"></div></div>
+<div class="row" style="margin-top:8px"><div><input id="lrb" type="time"></div><div><input id="lrbd" placeholder="+0050"></div></div>
+<label>Разности высот, м (MHWS, MHWN, MLWN, MLWS)</label>
+<div class="row"><div><input id="d1" inputmode="text" placeholder="MHWS"></div><div><input id="d2" inputmode="text" placeholder="MHWN"></div></div>
+<div class="row" style="margin-top:8px"><div><input id="d3" inputmode="text" placeholder="MLWN"></div><div><input id="d4" inputmode="text" placeholder="MLWS"></div></div>
+<label>Сезонная поправка, м (необязательно)</label>
+<input id="zc" inputmode="text" placeholder="0">
+</div>
+<div class="card">
+<h2>Момент и безопасность</h2>
+<div class="row">
+<div><label>Момент: время</label><input id="atx" type="time"></div>
+<div><label>Осадка судна, м</label><input id="adraft" inputmode="decimal"></div>
+</div>
+<div class="row">
+<div><label>Глубина на карте, м</label><input id="adepth" inputmode="decimal" placeholder="осушка со знаком −"></div>
+<div><label>Запас под килем, м</label><input id="amargin" inputmode="decimal"></div>
+</div>
+<div class="row">
+<div><label>Габарит моста над MHWS, м</label><input id="abridge" inputmode="decimal"></div>
+<div><label>Высота судна над водой, м</label><input id="aship" inputmode="decimal"></div>
+</div>
+</div>
+<div class="note err" id="aerr"></div>
+<div class="card" id="aout" hidden>
+<h2>Результат</h2>
+<div class="lbl">Высота воды в момент</div><div class="big2" id="ah"></div>
+<div class="note" id="ahd" style="text-align:center"></div>
+<div class="lbl">Нужная высота воды для прохода</div><div class="big2" id="ahn"></div>
+<div class="note" id="aht" style="text-align:center"></div>
+<div class="lbl">Запас под килем в момент</div><div class="big2" id="aukc"></div>
+<div class="lbl">Просвет под мостом в момент</div><div class="big2" id="abr"></div>
+<table id="atb"></table>
+<div class="note" id="awarn"></div>
+</div>
+<div class="note">Метод ATT: разности времени интерполируются по времени ПВ/МВ основного порта (период 12 ч), разности высот по высоте воды основного порта между сизигией и квадратурой; высота в промежуточный момент считается по косинусоиде. Печатные приливные кривые ATT для конкретных портов могут отличаться на несколько дециметров. Заметно точнее ручные расчёты по приливным кривым из таблиц.</div>
+</section>
+
+<section id="t5" hidden>
+<div class="card">
+<h2>Судно (профиль)</h2>
+<label>Название судна</label><input id="gname">
+<div class="row">
+<div><label>Ширина B, м</label><input id="gB" inputmode="decimal"></div>
+<div><label>Длина L, м</label><input id="gL" inputmode="decimal"></div>
+</div>
+<div class="row">
+<div><label>Коэффициент C</label><input id="gc" inputmode="decimal" placeholder="например 0.88"></div>
+<div><label>Мин. допустимая h, м</label><input id="gmin" inputmode="decimal" placeholder="необязательно"></div>
+</div>
+<select id="gref" style="margin-top:8px"><option value="">Подобрать C из справочника…</option><option value="0.88">Каботажные суда (в балласте): 0,88</option><option value="0.80">Промысловые суда (открытое море): 0,80</option><option value="0.95">Промысловые суда (прибрежный лов): 0,95</option><option value="0.62-1.00">Транспортные суда (в грузу): 0,62–1,00</option></select>
+<button class="sec" id="gccb">Рассчитать C по размерам (B, L, d)</button>
+<div class="note">C постоянный для судна и сохраняется в профиле. Можно ввести диапазон, например 0.62-1.00. Расчёт C по размерам берёт осадку d из блока «Приращение осадки при крене».</div>
+<button class="sec" id="gsave">💾 Сохранить профиль судна</button>
+<div class="note" id="gpm"></div>
+</div>
+<div class="card">
+<h2>Период качки T</h2>
+<select id="gtm"><option value="direct">Ввести период T, с</option><option value="meas">Рассчитать по замеру: T = Δt / n</option></select>
+<div id="gdirect"><label>Период T, с</label><input id="gT" inputmode="decimal"></div>
+<div id="gmeas" hidden>
+<div class="row">
+<div><label>Общее время Δt, с</label><input id="gdt" inputmode="decimal"></div>
+<div><label>Число полных колебаний n</label><input id="gn" inputmode="numeric"></div>
+</div>
+<button class="sec" id="gsw">▶ Секундомер: старт</button>
+<div class="note">Нажмите «старт» в крайнем положении борта и «стоп» после n полных колебаний, затем введите n.</div>
+<div class="note" id="gts"></div>
+</div>
+<div class="note">Полное колебание: от крайнего положения борта до того же положения. Для точности замеряйте 5–10 колебаний и берите среднее.</div>
+</div>
+<div class="note err" id="gerr"></div>
+<div class="card" id="gout" hidden>
+<h2>Результат</h2>
+<div class="lbl">Поперечная метацентрическая высота h</div><div class="big2" id="gh"></div>
+<div class="note" id="gst" style="text-align:center"></div>
+<table id="gtb"></table>
+<div class="note" id="gw"></div>
+</div>
+<div class="card">
+<h2>Приращение осадки при крене</h2>
+<div class="row">
+<div><label>Осадка прямая d, м</label><input id="gd" inputmode="decimal"></div>
+<div><label>Угол крена θ, градусы</label><input id="kth" inputmode="decimal" placeholder="например 5"></div>
+</div>
+<div class="note">Ширина B берётся из профиля судна выше. Осадка зависит от загрузки, поэтому вводится здесь.</div>
+<div class="note err" id="kerr"></div>
+<div id="kout" hidden>
+<div class="lbl">Приращение осадки Δd</div><div class="big2" id="kdd"></div>
+<div class="lbl">Осадка с учётом крена d + Δd</div><div class="big2" id="kdr"></div>
+<table id="ktb"></table>
+<div class="note" id="kw"></div>
+</div>
+<div class="note">Δd = (B / 2) · sin θ. Это приближённая оценка для малых углов (обычно до 10°). Она предполагает простую, близкую к прямоугольной форму подводной части. У судов со сложными обводами (особенно в носу и корме) реальное приращение может отличаться. Формула не учитывает другие изменения осадки, например проседание на мелководье.</div>
+</div>
+<div class="note">Капитанская формула: h = (C·B/T)². Это приближённая оценка. Она не заменяет информацию об остойчивости судна и кренование. Значения C в справочнике ориентировочные: сверяйте с документацией судна.</div>
+</section>
+
+<section id="t6" hidden>
+<div class="card">
+<h2>Азимуты светил</h2>
+<div class="note" id="skyinfo" style="margin-top:0"></div>
+<button id="skyup">🔄 Обновить координаты и время</button>
+<div class="note" id="skymsg"></div>
+<div class="row">
+<div><label>Показывать от высоты</label><select id="skymin"><option value="0">0°</option><option value="5" selected>5°</option><option value="10">10°</option><option value="20">20°</option></select></div>
+<div><label>Сортировка</label><select id="skysort"><option value="h">по высоте</option><option value="az">по азимуту</option><option value="n">по названию</option></select></div>
+</div>
+</div>
+<div class="card"><h2>Небесная сфера (вид сверху)</h2><div id="skychart"></div><div class="note">Центр: зенит, внешний круг: горизонт, N вверху. Жёлтая точка: Солнце. Кольца: высота 30° и 60°.</div></div>
+<div class="card"><h2>Светила над горизонтом</h2><table id="skytb"></table><div class="note" id="skyn"></div></div>
+<div class="note">Координаты, дата, время и пояс берутся с вкладки «Расчёт поправки компаса». Кнопка «Обновить» ставит текущее время (в выбранном поясе) и берёт координаты с GPS. В списке Солнце и 57 навигационных звёзд МАЕ с Полярной. Луна и планеты не включены. ИП: истинный пеленг (азимут от севера по часовой стрелке).</div>
+</section>
+
+<script>
+var D=Math.PI/180;
+var ST=[["Alpheratz",0,8,23.26,29,5,25.6,135.68,-162.95],["Ankaa",0,26,17.05,-42,18,21.5,232.76,-353.64],["Schedar",0,40,30.44,56,32,14.4,50.36,-32.17],["Diphda",0,43,35.37,-17,59,11.8,232.79,32.71],["Achernar",1,37,42.85,-57,14,12.3,87.0,-38.2],["Hamal",2,7,10.41,23,27,44.7,190.73,-145.77],["Acamar",2,58,15.68,-40,18,17.0,-53,20],["Menkar",3,2,16.77,4,5,23.6,-11.81,-78.76],["Mirfak",3,24,19.37,49,51,40.2,23.75,-26.23],["Aldebaran",4,35,55.24,16,30,33.5,62.78,-189.36],["Rigel",5,14,32.27,-8,12,5.9,1.31,0.50],["Capella",5,16,41.36,45,59,52.8,75.52,-427.13],["Bellatrix",5,25,7.86,6,20,58.9,-8.75,-13.28],["Elnath",5,26,17.51,28,36,26.8,23.28,-174.22],["Alnilam",5,36,12.81,-1,12,6.9,1.49,-1.06],["Betelgeuse",5,55,10.31,7,24,25.4,27.54,11.30],["Canopus",6,23,57.11,-52,41,44.4,19.93,23.24],["Sirius",6,45,8.92,-16,42,58.0,-546.01,-1223.07],["Adhara",6,58,37.55,-28,58,19.5,2.63,2.29],["Procyon",7,39,18.12,5,13,30.0,-714.59,-1036.80],["Pollux",7,45,18.95,28,1,34.3,-625.69,-45.95],["Avior",8,22,30.84,-59,30,34.1,-25.34,22.72],["Suhail",9,7,59.76,-43,25,57.3,-23.21,14.28],["Miaplacidus",9,13,11.98,-69,43,1.9,-157.66,108.91],["Alphard",9,27,35.24,-8,39,31.2,-14.49,33.25],["Regulus",10,8,22.31,11,58,2.0,-249.40,4.91],["Dubhe",11,3,43.67,61,45,3.7,-136.46,-35.25],["Denebola",11,49,3.58,14,34,19.4,-499.02,-113.78],["Gienah",12,15,48.37,-17,32,30.9,-158.61,-21.86],["Acrux",12,26,35.90,-63,5,56.7,-35.83,-14.86],["Gacrux",12,31,9.96,-57,6,47.6,27.94,-264.33],["Alioth",12,54,1.75,55,57,35.4,111.91,-8.24],["Spica",13,25,11.58,-11,9,40.8,-42.35,-30.67],["Alkaid",13,47,32.44,49,18,47.8,-121.23,-15.56],["Hadar",14,3,49.41,-60,22,22.9,-33.27,-23.16],["Menkent",14,6,40.95,-36,22,11.8,-519.29,-517.87],["Arcturus",14,15,39.67,19,10,56.7,-1093.39,-2000.06],["Rigil Kent.",14,39,36.49,-60,50,2.4,-3679.25,473.67],["Zubenelgenubi",14,50,52.71,-16,2,30.4,-105.69,-69.00],["Kochab",14,50,42.33,74,9,19.8,-32.29,11.91],["Alphecca",15,34,41.27,26,42,52.9,120.38,-89.44],["Antares",16,29,24.46,-26,25,55.2,-10.16,-23.21],["Atria",16,48,39.90,-69,1,39.8,17.85,-32.92],["Sabik",17,10,22.69,-15,43,29.7,41.16,97.65],["Shaula",17,33,36.52,-37,6,13.8,-8.90,-29.95],["Rasalhague",17,34,56.07,12,33,36.1,110.08,-222.61],["Eltanin",17,56,36.37,51,29,20.0,-8.52,-23.05],["Kaus Austr.",18,24,10.32,-34,23,4.6,-39.61,-124.05],["Vega",18,36,56.34,38,47,1.3,200.94,286.23],["Nunki",18,55,15.93,-26,17,48.2,13.87,-52.65],["Altair",19,50,47.00,8,52,6.0,536.82,385.54],["Peacock",20,25,38.86,-56,44,6.3,7.71,-86.15],["Deneb",20,41,25.92,45,16,49.2,1.56,1.55],["Enif",21,44,11.16,9,52,30.0,30.02,1.38],["Al Na\u2019ir",22,8,13.98,-46,57,39.5,127.60,-147.91],["Fomalhaut",22,57,39.05,-29,37,20.1,329.22,-164.22],["Markab",23,4,45.65,15,12,18.9,61.10,-42.56],["Polaris",2,31,49.09,89,15,50.8,44.48,-11.85]];
+function $(i){return document.getElementById(i)}
+$("body").innerHTML="<option value=\"sun\">Солнце (центр)</option>"+ST.map(function(s,i){return "<option value=\""+i+"\">"+(i<57?(i+1)+" ":"")+s[0]+"</option>"}).join("");
+function n(v){return parseFloat(String(v).replace(",","."))}
+function n360(x){x%=360;return x<0?x+360:x}
+function n180(x){x=n360(x);return x>180?x-360:x}
+function pad(x,l){return String(x).padStart(l,"0")}
+function dm(x){var s=x<0?"−":"";x=Math.abs(x);var d=Math.floor(x),m=Math.round((x-d)*600)/10;if(m>=60){d++;m=0}return s+d+"° "+m.toFixed(1)+"′"}
+function mn(x){return (x>=0?"+":"−")+Math.abs(x*60).toFixed(1)+"′"}
+function hm(h){h=((h%24)+24)%24;var m=Math.round(h*60);return pad(Math.floor(m/60)%24,2)+":"+pad(m%60,2)}
+function quad(a){a=n360(a);if(a<90)return "N "+a.toFixed(1)+"° E";if(a<180)return "S "+(180-a).toFixed(1)+"° E";if(a<270)return "S "+(a-180).toFixed(1)+"° W";return "N "+(360-a).toFixed(1)+"° W"}
+function setNow(){
+  var d=new Date();
+  $("date").value=d.getFullYear()+"-"+pad(d.getMonth()+1,2)+"-"+pad(d.getDate(),2);
+  $("time").value=pad(d.getHours(),2)+":"+pad(d.getMinutes(),2)+":"+pad(d.getSeconds(),2);
+  var o=-d.getTimezoneOffset()/60;$("zn").value=String(Math.abs(o));$("zs").value=o>=0?"E":"W";
 }
-function renderCharts(){
-  const el=$("charts");if(!el)return;
-  if(!H){el.innerHTML='<div class="card mu">Графики появятся после ближайшего обновления данных.</div>';return}
-  let h='<div class="chips">'+PER.map(([d,l])=>`<button data-p="${d}" class="${d===P?"on":""}">${l}</button>`).join("")+"</div>";
-  const W=340,Ht=200,L=8,R=44,T=12,B=26,col={USD:"#4c8dff",EUR:"#f0b429"};
-  for(const c of["USD","EUR"]){
-    const a=H[c]||[];if(!a.length)continue;
-    const cut=new Date(a[a.length-1][0]);cut.setDate(cut.getDate()-P);
-    const s=a.filter(p=>new Date(p[0])>=cut),n=s.length,vs=s.map(p=>p[1]);
-    let mn=Math.min(...vs),mx=Math.max(...vs);if(mx-mn<0.01){mn-=0.5;mx+=0.5}
-    const pad=(mx-mn)*0.12,lo=mn-pad,hi=mx+pad,base=Ht-B;
-    const xs=s.map((_,i)=>L+(W-L-R)*(n>1?i/(n-1):0.5)),ys=vs.map(v=>T+(base-T)*(1-(v-lo)/(hi-lo)));
-    CH[c]={s,xs,ys};
-    const line=smooth(xs.map((x,i)=>[x,ys[i]]));
-    let grid="";
-    for(let k=0;k<4;k++){const v=lo+(hi-lo)*k/3,y=T+(base-T)*(1-k/3);
-      grid+=`<line x1="${L}" x2="${W-R}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--bd)" stroke-width=".6"/><text x="${W-R+5}" y="${(y+3).toFixed(1)}" font-size="10" fill="var(--mu)">${v.toFixed(2)}</text>`}
-    const K=n<2?1:(P<=7?Math.min(n,4):5);let ticks="";
-    for(let k=0;k<K;k++){const i=K>1?Math.round(k*(n-1)/(K-1)):0,[yy,mm,dd]=s[i][0].split("-");
-      const lab=P<=90?`${dd}.${mm}`:`${MON[+mm-1]} ${yy.slice(2)}`,x=xs[i].toFixed(1);
-      ticks+=`<line x1="${x}" x2="${x}" y1="${base}" y2="${base+4}" stroke="var(--mu)" stroke-width=".6"/><text x="${x}" y="${Ht-7}" font-size="10" text-anchor="${k==0?"start":k==K-1?"end":"middle"}" fill="var(--mu)">${lab}</text>`}
-    const ch=vs[n-1]-vs[0],pc=ch/vs[0]*100;
-    h+=`<div class="card ch"><div class="hd"><b>${names[c]}</b><span><b>${f(vs[n-1])} ₽</b> <span class="${ch>0?"pos":ch<0?"neg":""}">${ch>=0?"+":""}${ch.toFixed(2)} (${pc.toFixed(1)}%)</span></span></div>
-    <div class="mu" id="i_${c}">${dfmt(s[0][0])} — ${dfmt(s[n-1][0])} · мин ${f(Math.min(...vs))} · макс ${f(Math.max(...vs))}</div>
-    <svg viewBox="0 0 ${W} ${Ht}" data-c="${c}"><defs><linearGradient id="g_${c}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col[c]}" stop-opacity=".32"/><stop offset="1" stop-color="${col[c]}" stop-opacity="0"/></linearGradient></defs>
-    ${grid}<path d="${line}L${xs[n-1].toFixed(1)} ${base}L${xs[0].toFixed(1)} ${base}Z" fill="url(#g_${c})"/>
-    <path d="${line}" fill="none" stroke="${col[c]}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-    ${ticks}<circle cx="${xs[n-1].toFixed(1)}" cy="${ys[n-1].toFixed(1)}" r="3" fill="${col[c]}"/>
-    <line id="l_${c}" y1="${T}" y2="${base}" stroke="var(--mu)" stroke-width=".8" stroke-dasharray="3" visibility="hidden"/><circle id="o_${c}" r="4" fill="${col[c]}" stroke="var(--card)" stroke-width="1.5" visibility="hidden"/></svg></div>`;
+setNow();$("now").onclick=setNow;
+function setC(p,v,pos,neg){var a=Math.abs(v),d=Math.floor(a),m=(a-d)*60;if(m>=59.95){d++;m=0}$(p+"d").value=d;$(p+"m").value=m.toFixed(1);$(p+"s").value=v>=0?pos:neg}
+function getC(p,pos){var d=n($(p+"d").value),m=n($(p+"m").value);if(isNaN(m))m=0;if(isNaN(d)||m<0||m>=60)return NaN;return (d+m/60)*($(p+"s").value===pos?1:-1)}
+$("gps").onclick=function(){
+  var m=$("gpsmsg");m.className="note";m.textContent="Определяю…";
+  if(!navigator.geolocation){m.className="note err";m.textContent="GPS недоступен — введите координаты вручную.";return}
+  navigator.geolocation.getCurrentPosition(function(p){
+    setC("la",p.coords.latitude,"N","S");setC("lo",p.coords.longitude,"E","W");
+    m.textContent="Готово, точность ≈ "+Math.round(p.coords.accuracy)+" м";
+  },function(e){m.className="note err";m.textContent="Не удалось получить GPS ("+e.message+"). Введите координаты вручную."},{enableHighAccuracy:true,timeout:15000});
+};
+function jdOf(ms){return ms/86400000+2440587.5}
+function gmst(ms){return n360(280.46061837+360.98564736629*(jdOf(ms)-2451545.0))}
+function sunAt(ms){
+  var t=jdOf(ms)-2451545.0,L=n360(280.460+0.9856474*t),g=n360(357.528+0.9856003*t)*D;
+  var lam=(L+1.915*Math.sin(g)+0.020*Math.sin(2*g))*D,eps=(23.439-0.0000004*t)*D;
+  var ra=n360(Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam))/D);
+  var R=1.00014-0.01671*Math.cos(g)-0.00014*Math.cos(2*g);
+  return {lam:lam/D,ra:ra,dec:Math.asin(Math.sin(eps)*Math.sin(lam))/D,eot:4*n180(L-ra),sd:0.26664/R,gha:n360(gmst(ms)-ra)};
+}
+function starAt(ms,s){
+  var T=(jdOf(ms)-2451545.0)/36525,yr=T*100;
+  var dc=(Math.abs(s[4])+s[5]/60+s[6]/3600)*(s[4]<0?-1:1),cd=Math.cos(dc*D);
+  var a=(s[1]+s[2]/60+s[3]/3600)*15+s[7]*yr/3.6e6/cd,d=dc+s[8]*yr/3.6e6;
+  var Z=(2306.2181*T+0.30188*T*T+0.017998*T*T*T)/3600,ZZ=(2306.2181*T+1.09468*T*T+0.018203*T*T*T)/3600,TH=(2004.3109*T-0.42665*T*T-0.041833*T*T*T)/3600*D;
+  var ar=(a+Z)*D,dr=d*D;
+  var A=Math.cos(dr)*Math.sin(ar),B=Math.cos(TH)*Math.cos(dr)*Math.cos(ar)-Math.sin(TH)*Math.sin(dr),C=Math.sin(TH)*Math.cos(dr)*Math.cos(ar)+Math.cos(TH)*Math.sin(dr);
+  var ra=Math.atan2(A,B)/D+ZZ,de=Math.asin(C)/D;
+  var om=(125.04-1934.136*T)*D,Ls=(280.4665+36000.7698*T)*D;
+  var dpsi=(-17.20*Math.sin(om)-1.32*Math.sin(2*Ls))/3600,deps=(9.20*Math.cos(om)+0.57*Math.cos(2*Ls))/3600;
+  var ep=(23.4393-0.0130*T)*D,al=ra*D,dl=de*D,tn=Math.tan(dl);
+  var dA=(Math.cos(ep)+Math.sin(ep)*Math.sin(al)*tn)*dpsi-Math.cos(al)*tn*deps;
+  var dD=Math.sin(ep)*Math.cos(al)*dpsi+Math.sin(al)*deps;
+  var sl=sunAt(ms).lam*D,k=20.49552/3600;
+  dA+=-k*(Math.cos(al)*Math.cos(sl)*Math.cos(ep)+Math.sin(al)*Math.sin(sl))/Math.cos(dl);
+  dD+=-k*(Math.cos(sl)*Math.cos(ep)*(Math.tan(ep)*Math.cos(dl)-Math.sin(al)*Math.sin(dl))+Math.cos(al)*Math.sin(dl)*Math.sin(sl));
+  return {sha:n360(360-(ra+dA)),dec:de+dD,eq:dpsi*Math.cos(ep)};
+}
+function azAlt(lat,dec,lha){
+  var az=n360(Math.atan2(-Math.sin(lha*D),Math.tan(dec*D)*Math.cos(lat*D)-Math.sin(lat*D)*Math.cos(lha*D))/D);
+  var h=Math.asin(Math.sin(lat*D)*Math.sin(dec*D)+Math.cos(lat*D)*Math.cos(dec*D)*Math.cos(lha*D))/D;
+  return {az:az,h:h};
+}
+function refr(h){if(h<-1)return 0;return 1/Math.tan((h+7.31/(h+4.4))*D)/60}
+function calc(){
+  var lat=getC("la","N"),lon=getC("lo","E"),z=n($("zn").value),kp=n($("kp").value);
+  if(isNaN(lat)||isNaN(lon)||isNaN(z)||isNaN(kp)||!$("date").value||!$("time").value){alert("Заполните координаты, дату, время, часовой пояс и КП");return}
+  if(lat>90||lat<-90||lon>180||lon<-180){alert("Проверьте координаты");return}
+  var ds=$("date").value.split("-"),ts=$("time").value.split(":");
+  var tzh=($("zs").value==="E"?1:-1)*z;
+  var Y=+ds[0],M=+ds[1]-1,Dd=+ds[2];
+  var utc=Date.UTC(Y,M,Dd,+ts[0],+ts[1],+(ts[2]||0))-tzh*3600000;
+  var t0=Math.floor(utc/3600000)*3600000,u=new Date(utc),w=[];
+  var b=$("body").value,isSun=(b==="sun"),dec,gha,name,R=[];
+  R.push(["#","МАЕ — данные на момент наблюдения"]);
+  R.push(["Время UTC",u.getUTCFullYear()+"-"+pad(u.getUTCMonth()+1,2)+"-"+pad(u.getUTCDate(),2)+" "+pad(u.getUTCHours(),2)+":"+pad(u.getUTCMinutes(),2)+":"+pad(u.getUTCSeconds(),2)]);
+  R.push(["Ближайший целый час UTC",pad(new Date(t0).getUTCHours(),2)+":00"]);
+  var smin=(utc-t0)/60000;
+  var s0=sunAt(t0),s1=sunAt(t0+3600000),sn=sunAt(utc);
+  if(isSun){
+    var dh=s1.dec-s0.dec;
+    gha=sn.gha;dec=sn.dec;name="Солнце";
+    R.push(["GHA ☉ на целый час",dm(s0.gha)]);
+    R.push(["Приращение GHA за "+Math.floor(smin)+"м "+Math.round((smin%1)*60)+"с",dm(n360(sn.gha-s0.gha))]);
+    R.push(["GHA ☉",dm(gha)]);
+    R.push(["Dec ☉ на целый час",dm(s0.dec)]);
+    R.push(["d (изменение Dec за час)",mn(dh)]);
+    R.push(["Поправка к Dec (d·t)",mn(dh*smin/60)]);
+    R.push(["Dec ☉",dm(dec)]);
+    R.push(["Полудиаметр SD",(sn.sd*60).toFixed(1)+"′"]);
+    var e=sn.eot,es=Math.abs(e);
+    R.push(["Уравнение времени",(e>=0?"+":"−")+Math.floor(es)+"м "+Math.round((es%1)*60)+"с"]);
+  }else{
+    var s=ST[+b],st=starAt(utc,s),st0=starAt(t0,s);name=s[0];
+    var g0=n360(gmst(t0)+st0.eq),g1=n360(gmst(utc)+st.eq);
+    dec=st.dec;gha=n360(g1+st.sha);
+    R.push(["GHA ♈ на целый час",dm(g0)]);
+    R.push(["Приращение GHA ♈ за "+Math.floor(smin)+"м "+Math.round((smin%1)*60)+"с",dm(n360(g1-g0))]);
+    R.push(["GHA ♈",dm(g1)]);
+    R.push(["SHA звезды на дату",dm(st.sha)]);
+    R.push(["GHA звезды",dm(gha)]);
+    R.push(["Dec звезды на дату",dm(dec)]);
   }
-  el.innerHTML=h+'<div class="mu">Проведите пальцем по графику, чтобы увидеть курс на дату.</div>';
-  el.querySelectorAll("svg").forEach(sv=>{
-    const c=sv.dataset.c,{s,xs,ys}=CH[c];
-    const mv=e=>{const r=sv.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W;
-      let i=0,b=1e9;xs.forEach((x,j)=>{const q=Math.abs(x-px);if(q<b){b=q;i=j}});
-      const ln=$("l_"+c),o=$("o_"+c);ln.setAttribute("x1",xs[i]);ln.setAttribute("x2",xs[i]);ln.setAttribute("visibility","visible");
-      o.setAttribute("cx",xs[i]);o.setAttribute("cy",ys[i]);o.setAttribute("visibility","visible");
-      $("i_"+c).textContent=dfmt(s[i][0])+" · "+f(s[i][1])+" ₽"};
-    sv.addEventListener("pointermove",mv);sv.addEventListener("pointerdown",mv);
-  });
+  var lha=n360(gha+lon);
+  R.push(["LHA = GHA + λ",dm(lha)]);
+  var r=azAlt(lat,dec,lha),az=r.az,h=r.h;
+  var eye=n($("eye").value),dip=isNaN(eye)||eye<0?0:1.76*Math.sqrt(eye)/60;
+  R.push(["#","МТ — расчёт пеленга и поправок"]);
+  R.push(["Высота светила h (геом.)",dm(h)]);
+  R.push(["Истинный пеленг ИП (круговой)",az.toFixed(1)+"°"]);
+  R.push(["Азимут (четвертной)",quad(az)]);
+  var rf=refr(h);
+  R.push(["Рефракция ρ",(rf*60).toFixed(1)+"′"]);
+  if(isSun)R.push(["Горизонтальный параллакс (поправка)",(0.147*Math.cos(h*D)).toFixed(2)+"′"]);
+  if(dip>0)R.push(["Наклонение горизонта",(dip*60).toFixed(1)+"′"]);
+  if(isSun){
+    var x=Math.sin(dec*D)/Math.cos(lat*D);
+    if(Math.abs(x)<=1){
+      var am=Math.asin(x)/D,ab=Math.abs(am).toFixed(1),nm=am>=0?"N":"S";
+      var ipE=am>=0?90-am:90+Math.abs(am),ipW=360-ipE;
+      R.push(["Амплитуда (h = 0), sin A = sin δ / cos φ","E/W "+ab+"° "+nm]);
+      R.push(["ИП при восходе / заходе (h = 0)",ipE.toFixed(1)+"° / "+ipW.toFixed(1)+"°"]);
+    }
+    var h0=-(0.5667+dip),c=(Math.sin(h0*D)-Math.sin(lat*D)*Math.sin(dec*D))/(Math.cos(lat*D)*Math.cos(dec*D));
+    var tr=12-lon/15-sn.eot/60,tm=Date.UTC(Y,M,Dd)+tr*3600000,st=sunAt(tm);
+    tr=12-lon/15-st.eot/60;
+    var dT=st.dec,cz=(Math.sin(h0*D)-Math.sin(lat*D)*Math.sin(dT*D))/(Math.cos(lat*D)*Math.cos(dT*D));
+    R.push(["#","МАЕ — Солнце на дату (местное время по поясу)"]);
+    R.push(["Меридианный переход",hm(tr+tzh)]);
+    if(Math.abs(cz)<=1){
+      var Hh=Math.acos(cz)/D/15,Zr=Math.acos((Math.sin(dT*D)-Math.sin(lat*D)*Math.sin(h0*D))/(Math.cos(lat*D)*Math.cos(h0*D)))/D;
+      R.push(["Восход (центр на видимом горизонте)",hm(tr-Hh+tzh)]);
+      R.push(["Заход (центр на видимом горизонте)",hm(tr+Hh+tzh)]);
+      R.push(["ИП восхода / захода с рефракцией",Zr.toFixed(1)+"° / "+(360-Zr).toFixed(1)+"°"]);
+    }else R.push(["Восход/заход","нет (полярный день или ночь)"]);
+    if(Math.abs(h-h0)<1.5)w.push("Солнце у горизонта: режим восхода/захода применим.");
+  }
+  var dk=n180(az-kp),kind=$("ctype").value;
+  $("dk").textContent=(kind==="gyro"?"ΔГК = ":"ΔK = ")+(dk>=0?"+":"−")+Math.abs(dk).toFixed(1)+"°";
+  $("dkl").textContent=name+" · "+(dk>=0?"E (плюс)":"W (минус)")+" · ΔK = ИП − КП";
+  var v=n($("var").value)*($("vars").value==="W"?-1:1),sgn=function(x){return (x>=0?"+":"−")+Math.abs(x).toFixed(1)+"°"},S=[["#","Итог"]];
+  if(kind==="gyro"){
+    S.push(["Поправка гирокомпаса ΔГК",sgn(dk)],["Истинный пеленг (азимут) ИП",az.toFixed(1)+"°"],["Гирокомпасный пеленг ГКП",kp.toFixed(1)+"°"]);
+  }else{
+    S.push(["Поправка компаса ΔK",sgn(dk)],["Истинный пеленг (азимут) ИП",az.toFixed(1)+"°"],["Компасный пеленг КП",kp.toFixed(1)+"°"],["Магнитное склонение d",isNaN(v)?"не введено":sgn(v)],["Девиация δ = ΔK − d",isNaN(v)?"введите склонение d":sgn(dk-v)],["Поправка магнитного компаса ΔMK = d + δ",sgn(dk)]);
+  }
+  R=S.concat(R);
+  $("tb").innerHTML=R.map(function(r){return r[0]==="#"?"<tr><td class=\"h\" colspan=\"2\">"+r[1]+"</td></tr>":"<tr><td>"+r[0]+"</td><td>"+r[1]+"</td></tr>"}).join("");
+  if(h<-1)w.push("Светило под горизонтом ("+h.toFixed(1)+"°): проверьте дату, время и пояс.");
+  if(h>60)w.push("Высота больше 60°: азимут меняется очень быстро, точность пеленга низкая.");
+  if(kind==="mag")w.push("Для магнитного компаса ΔK — общая поправка (склонение + девиация).");
+  $("warn").textContent=w.join(" ");
+  $("out").hidden=false;$("ph").hidden=true;if(!window.matchMedia("(min-width:600px)").matches){if(window.showP)window.showP("res");window.scrollTo({top:0,behavior:"smooth"})}
 }
-fetch("data/history.json?"+Date.now()).then(r=>r.json()).then(x=>{H=x;if(D)render1();else renderCharts()}).catch(()=>{});
-function openBank(i){const b=D.banks[i];if(!b)return;const br=b.branches||[];
-  const r=(x,l)=>x?`${l} ${f(x.buy)} / ${f(x.sell)}`:"";
-  $("mh").innerHTML=`<h2>${esc(b.name)}</h2><div class="mu">Пункты обмена и отделения в Калининграде: ${br.length}. Курс: покупка / продажа.</div>`+
-   (br.length?br.map(x=>`<div class="br">${esc(x.address)}<div class="mu">${[r(x.USD,"$"),r(x.EUR,"€")].filter(Boolean).join(" · ")}</div><a class="lk" target="_blank" rel="noopener" href="https://yandex.ru/maps/?text=${encodeURIComponent("Калининград "+b.name+" "+x.address)}">Показать на карте</a></div>`).join(""):'<div class="br mu">Адреса пока не найдены.</div>')+
-   `<div class="mu" style="margin-top:8px">Перед визитом уточните курс и наличие валюты в отделении.</div>`;
-  $("md").hidden=false}
-document.addEventListener("click",e=>{const a=e.target.closest(".lk[data-i]");if(a)openBank(+a.dataset.i);const pb=e.target.closest("button[data-p]");if(pb){P=+pb.dataset.p;renderCharts()}if(e.target.id==="md"||e.target.id==="mc")$("md").hidden=true});
-let dp;addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e;$("inst").style.display="inline-block"});
-$("inst").onclick=()=>{dp&&dp.prompt();$("inst").style.display="none"};
-if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
-</script></body></html>
+$("calc").onclick=calc;
+document.querySelectorAll(".tab").forEach(function(b){b.onclick=function(){
+  document.querySelectorAll(".tab").forEach(function(x){x.classList.toggle("on",x===b)});
+  ["t1","t2","t3","t4","t5","t6"].forEach(function(id){$(id).hidden=b.dataset.t!==id});if(b.dataset.t==="t6")skyCalc();
+}});
+["tzn","azn"].forEach(function(id){var h="";for(var i=0;i<=12;i++)h+="<option value=\""+i+"\">"+i+"</option>";$(id).innerHTML=h});
+(function(){var d=new Date(),o=-d.getTimezoneOffset()/60;
+  $("tdate").value=d.getFullYear()+"-"+pad(d.getMonth()+1,2)+"-"+pad(d.getDate(),2);
+  $("ttime").value=pad(d.getHours(),2)+":"+pad(d.getMinutes(),2);
+  $("tzn").value=$("azn").value=String(Math.min(12,Math.round(Math.abs(o))));$("tzs").value=$("azs").value=o>=0?"E":"W";})();
+function fmt(ms){var d=new Date(ms);return pad(d.getUTCDate(),2)+"."+pad(d.getUTCMonth()+1,2)+"."+d.getUTCFullYear()+" "+pad(d.getUTCHours(),2)+":"+pad(d.getUTCMinutes(),2)}
+function zl(z,sg){return z+" "+sg}
+function tcalc(){
+  var e=$("terr");e.textContent="";$("tout").hidden=true;
+  var dist=n($("dist").value),spd=n($("spd").value),z1=n($("tzn").value),z2=n($("azn").value);
+  var hasDep=$("tdate").value&&$("ttime").value,hasArr=$("sdate").value&&$("stime").value;
+  if(!hasDep||isNaN(dist)||isNaN(z1)||isNaN(z2))return;
+  if(dist<=0){e.textContent="Расстояние должно быть больше нуля.";return}
+  var t1=($("tzs").value==="E"?1:-1)*z1,t2=($("azs").value==="E"?1:-1)*z2;
+  var ds=$("tdate").value.split("-"),ts=$("ttime").value.split(":");
+  var depU=Date.UTC(+ds[0],+ds[1]-1,+ds[2],+ts[0],+ts[1],0)-t1*3600000;
+  var hrs,arrU,mode;
+  if(hasArr){
+    var c=$("sdate").value.split("-"),f=$("stime").value.split(":");
+    arrU=Date.UTC(+c[0],+c[1]-1,+c[2],+f[0],+f[1],0)-t2*3600000;
+    hrs=(arrU-depU)/3600000;
+    if(hrs<=0){e.textContent="Прибытие должно быть позже отхода (с учётом часовых поясов).";return}
+    mode="spd";
+  }else if(!isNaN(spd)){
+    if(spd<=0){e.textContent="Скорость должна быть больше нуля.";return}
+    hrs=dist/spd;arrU=depU+hrs*3600000;mode="eta";
+  }else return;
+  var tm=Math.round(hrs*60),dd=Math.floor(tm/1440),hh=Math.floor(tm%1440/60),mm=tm%60,p=[];
+  if(dd>0)p.push(dd+" дн.");if(hh>0)p.push(hh+" ч.");p.push(mm+" мин.");
+  var v=dist/hrs;
+  $("thead").textContent=mode==="spd"?"Результат: требуемая скорость":"Результат: ETA";
+  $("sblk").hidden=mode!=="spd";
+  $("tspd").textContent=v.toFixed(1)+" уз";
+  $("tdur").textContent=p.join(" ");
+  var al=new Date(arrU+t2*3600000);
+  $("tadate").textContent=pad(al.getUTCDate(),2)+"."+pad(al.getUTCMonth()+1,2)+"."+al.getUTCFullYear();
+  $("tatime").textContent=pad(al.getUTCHours(),2)+":"+pad(al.getUTCMinutes(),2);
+  $("twarn").textContent=(mode==="spd"&&v>40)?"Скорость выше 40 узлов — проверьте даты, время и пояса.":"";
+  var R=[["Отход, местное ("+zl(z1,$("tzs").value)+")",fmt(depU+t1*3600000)],["Отход, UTC",fmt(depU)],["Прибытие, UTC",fmt(arrU)],["Прибытие, местное ("+zl(z2,$("azs").value)+")",fmt(arrU+t2*3600000)],["Всего в пути",hrs.toFixed(2)+" ч ("+tm+" мин)"]];
+  if(mode==="spd")R.push(["Скорость",v.toFixed(2)+" уз"]);
+  $("ttb").innerHTML=R.map(function(r){return "<tr><td>"+r[0]+"</td><td>"+r[1]+"</td></tr>"}).join("");
+  $("tout").hidden=false;
+}
+["tdate","ttime","tzn","tzs","azn","azs","sdate","stime","dist","spd"].forEach(function(id){$(id).addEventListener("input",tcalc);$(id).addEventListener("change",tcalc)});
+if("serviceWorker" in navigator&&location.hostname!=="localhost"){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").then(function(){return navigator.serviceWorker.ready}).then(function(){var d=document.createElement("div");d.className="note";d.textContent="Офлайн-режим готов: приложение откроется без интернета. Поиск порта и прогноз приливов требуют сети.";document.body.appendChild(d)}).catch(function(){})})}
+
+var TD=null,PR=[];
+function zoneT(){return ($("pzs").value==="E"?1:-1)*n($("pzn").value)}
+(function(){var h="";for(var i=0;i<=12;i++)h+="<option value=\""+i+"\">"+i+"</option>";$("pzn").innerHTML=h;
+  var d=new Date(),o=-d.getTimezoneOffset()/60;$("pzn").value=String(Math.min(12,Math.round(Math.abs(o))));$("pzs").value=o>=0?"E":"W";
+  $("pdate").value=d.getFullYear()+"-"+pad(d.getMonth()+1,2)+"-"+pad(d.getDate(),2);
+  $("ptime").value=pad(d.getHours(),2)+":"+pad(d.getMinutes(),2);})();
+function autoZone(lon){$("pzn").value=String(Math.min(12,Math.round(Math.abs(lon)/15)));$("pzs").value=lon>=0?"E":"W"}
+function pickPort(i){var r=PR[i];if(!r)return;setC("pl",r.latitude,"N","S");setC("pn",r.longitude,"E","W");autoZone(r.longitude);$("pmsg").className="note";$("pmsg").textContent="Выбрано: "+r.name+(r.country?", "+r.country:"")}
+$("pres").onchange=function(){pickPort(+this.value)};
+$("psearch").onclick=function(){
+  var q=$("pname").value.trim(),m=$("pmsg");if(!q)return;
+  m.className="note";m.textContent="Ищу…";
+  fetch("https://geocoding-api.open-meteo.com/v1/search?count=8&language=ru&format=json&name="+encodeURIComponent(q)).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(j){
+    PR=j.results||[];
+    if(!PR.length){m.textContent="Ничего не найдено. Попробуйте название латиницей или введите координаты.";$("pres").hidden=true;return}
+    $("pres").innerHTML=PR.map(function(r,i){return "<option value=\""+i+"\">"+r.name+(r.admin1?", "+r.admin1:"")+(r.country?", "+r.country:"")+"</option>"}).join("");
+    $("pres").hidden=PR.length<2;pickPort(0);
+  }).catch(function(e){m.className="note err";m.textContent="Поиск не удался ("+e.message+"). Нужен интернет; введите координаты вручную."});
+};
+$("pgps").onclick=function(){
+  var m=$("pmsg");m.className="note";m.textContent="Определяю…";
+  if(!navigator.geolocation){m.className="note err";m.textContent="GPS недоступен — введите координаты вручную.";return}
+  navigator.geolocation.getCurrentPosition(function(p){setC("pl",p.coords.latitude,"N","S");setC("pn",p.coords.longitude,"E","W");autoZone(p.coords.longitude);m.textContent="Готово, точность ≈ "+Math.round(p.coords.accuracy)+" м"},function(e){m.className="note err";m.textContent="Не удалось получить GPS ("+e.message+")."},{enableHighAccuracy:true,timeout:15000});
+};
+$("pgo").onclick=function(){
+  var lat=getC("pl","N"),lon=getC("pn","E"),m=$("pmsg2");m.className="note err";m.textContent="";
+  if(isNaN(lat)||isNaN(lon)||Math.abs(lat)>90||Math.abs(lon)>180){m.textContent="Введите координаты порта или найдите порт по названию.";return}
+  m.className="note";m.textContent="Загружаю…";
+  fetch("https://marine-api.open-meteo.com/v1/marine?latitude="+lat.toFixed(4)+"&longitude="+lon.toFixed(4)+"&hourly=sea_level_height_msl&past_days=2&forecast_days=7&timezone=GMT").then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(j){
+    var T=j.hourly&&j.hourly.time,V=j.hourly&&j.hourly.sea_level_height_msl;
+    if(!V||V.every(function(v){return v===null})){TD=null;m.className="note err";m.textContent="Для этой точки нет данных модели (слишком близко к берегу или вдали от моря). Сдвиньте координаты в открытую воду рядом с портом.";return}
+    TD={t:T.map(function(x){return Date.parse(x+":00Z")}),v:V};
+    m.textContent="Готово";renderTide();
+  }).catch(function(e){m.className="note err";m.textContent="Не удалось получить данные ("+e.message+"). Нужен интернет; в окне claude.ai запрос может быть заблокирован — откройте приложение по адресу GitHub."});
+};
+function heightAt(ms){var t=TD.t,v=TD.v;if(ms<t[0]||ms>=t[t.length-1])return null;var i=Math.floor((ms-t[0])/3600000),a=v[i],b=v[i+1];if(a==null||b==null)return null;var f=(ms-t[i])/3600000;return a+(b-a)*(1-Math.cos(Math.PI*f))/2}
+function sg(x){return (x>=0?"+":"−")+Math.abs(x).toFixed(2)}
+function renderTide(){
+  if(!TD)return;
+  var z=zoneT(),t=TD.t,v=TD.v,ds=$("pdate").value.split("-"),days=+$("pdays").value;
+  if(ds.length<3||isNaN(z))return;
+  var s0=Date.UTC(+ds[0],+ds[1]-1,+ds[2])-z*3600000,s1=s0+days*86400000,rows=TD.ext?TD.ext.filter(function(r){return r[0]>=s0&&r[0]<s1}):[];
+  for(var i=1;!TD.ext&&i<t.length-1;i++){
+    var a=v[i-1],b=v[i],c=v[i+1];if(a==null||b==null||c==null)continue;
+    var hw=b>a&&b>=c,lw=b<a&&b<=c;if(!hw&&!lw)continue;
+    var den=a-2*b+c,dl=den?0.5*(a-c)/den:0,tm=t[i]+dl*3600000,h=b-0.25*(a-c)*dl;
+    if(tm<s0||tm>=s1)continue;
+    rows.push([tm,hw,h]);
+  }
+  var out=rows.map(function(r){var d=new Date(r[0]+z*3600000);return "<tr><td>"+pad(d.getUTCDate(),2)+"."+pad(d.getUTCMonth()+1,2)+" "+pad(d.getUTCHours(),2)+":"+pad(d.getUTCMinutes(),2)+"</td><td>"+(r[1]?"ПВ (полная вода)":"МВ (малая вода)")+"</td><td>"+sg(r[2])+" м</td></tr>"}).join("");
+  $("ptb").innerHTML=out||"<tr><td>В выбранном периоде нет данных (прогноз доступен около 7 суток вперёд).</td></tr>";
+  var tt=($("ptime").value||"").split(":"),hh=$("phh"),hd=$("phd");
+  hh.textContent="—";hd.textContent="";
+  if(tt.length>=2){
+    var ms=s0+(+tt[0]*60+ +tt[1])*60000,h0=heightAt(ms),h1=heightAt(ms+600000);
+    if(h0!=null){hh.textContent=sg(h0)+" м";hd.textContent=h1==null?"":(h1>h0?"вода прибывает":"вода убывает")+" · относительно "+(TD.label||"среднего уровня моря")}
+  }
+  var pts=[];for(var q=s0;q<=s1;q+=600000){var hq=heightAt(q);if(hq!=null)pts.push([q,hq])}
+  var cur=null;if(tt.length>=2){var cm=s0+(+tt[0]*60+ +tt[1])*60000,ch=heightAt(cm);if(ch!=null)cur=[cm,ch]}
+  setChart(chartSVG(pts,rows,cur,z,s0,s1,{lab:days<=2?2:days<=3?1:0}),"Время в выбранном поясе, высота от "+(TD.label||"среднего уровня моря")+". Красные точки: ПВ, зелёные: МВ, зелёный пунктир: выбранный момент.");
+  $("pout").hidden=false;
+}
+["pdate","pdays","ptime","pzn","pzs"].forEach(function(id){$(id).addEventListener("input",renderTide);$(id).addEventListener("change",renderTide)});
+function mcalc(){
+  var e=$("merr");e.textContent="";$("mout").hidden=true;
+  function tp(id){var s=$(id).value;if(!s)return NaN;var p=s.split(":");return +p[0]+p[1]/60}
+  var t1=tp("m1t"),t2=tp("m2t"),h1=n($("m1h").value),h2=n($("m2h").value);
+  if(isNaN(t1)||isNaN(t2)||isNaN(h1)||isNaN(h2))return;
+  var D=((t2-t1)%24+24)%24,A=(h1-h2)/2,Hm=(h1+h2)/2;
+  if(D<0.25||Math.abs(A)<0.005){e.textContent="Проверьте данные: события должны различаться по времени и высоте.";return}
+  var tx=tp("mxt"),hx=n($("mxh").value),msg=[];
+  $("mh").textContent="—";$("mtm").textContent="—";
+  if(!isNaN(tx)){var t=((tx-t1)%24+24)%24;if(t>D)msg.push("Момент вне интервала между введёнными событиями.");else $("mh").textContent=sg(Hm+A*Math.cos(Math.PI*t/D))+" м"}
+  if(!isNaN(hx)){var c=(hx-Hm)/A;if(Math.abs(c)>1)msg.push("Нужная высота вне диапазона между событиями.");else $("mtm").textContent=hm(t1+D/Math.PI*Math.acos(c))}
+  e.textContent=msg.join(" ");
+  if(!TD){var g0=t1*3600000,g1=(t1+D)*3600000,gp=[];for(var q=0;q<=80;q++)gp.push([g0+(g1-g0)*q/80,Hm+A*Math.cos(Math.PI*q/80)]);
+    var gc=null;if(!isNaN(tx)){var tq=((tx-t1)%24+24)%24;if(tq<=D)gc=[g0+tq*3600000,Hm+A*Math.cos(Math.PI*tq/D)]}
+    setChart(chartSVG(gp,[[g0,h1>h2,h1],[g1,h1<=h2,h2]],gc,0,g0,g1,{lab:2,noDate:true}),"График по введённым ПВ и МВ (косинусоида). Красная точка: ПВ, зелёная: МВ.")}
+  $("mout").hidden=false;
+}
+["m1t","m1h","m2t","m2h","mxt","mxh"].forEach(function(id){$(id).addEventListener("input",mcalc);$(id).addEventListener("change",mcalc)});
+
+function pd(s){s=(s||"").replace(/\s/g,"").replace("−","-");if(!s)return NaN;var sg=1;if(s[0]==="-"){sg=-1;s=s.slice(1)}else if(s[0]==="+")s=s.slice(1);var h,m;if(s.indexOf(":")>=0){var p=s.split(":");h=+p[0];m=+p[1]}else if(s.length<=2){h=0;m=+s}else{h=+s.slice(0,-2);m=+s.slice(-2)}if(isNaN(h)||isNaN(m))return NaN;return sg*(h+m/60)}
+function pn(s){return n(String(s).replace("−","-"))}
+function tpv(id){var s=$(id).value;if(!s)return NaN;var p=s.split(":");return +p[0]+p[1]/60}
+function interpT(x,a,b){
+  var ta=((a[0]%12)+12)%12,tb=((b[0]%12)+12)%12;x=((x%12)+12)%12;
+  if(ta>tb){var q=a;a=b;b=q;var w=ta;ta=tb;tb=w}
+  if(tb-ta<1e-9)return a[1];
+  if(x>=ta&&x<=tb)return a[1]+(b[1]-a[1])*(x-ta)/(tb-ta);
+  var xx=x<ta?x+12:x;return b[1]+(a[1]-b[1])*(xx-tb)/(ta+12-tb);
+}
+function fT(t){var d=Math.floor(t/24);return hm(t)+(d>0?" (+"+d+" сут)":d<0?" ("+d+" сут)":"")}
+function acalc(){
+  var e=$("aerr"),w=[];e.textContent="";$("aout").hidden=true;
+  $("asec").hidden=$("amode").value!=="sec";
+  var L=["sa1","sa2","sa3","sa4"].map(function(i){return n($(i).value)});
+  var tH=tpv("eht"),hH=n($("ehh").value),tL=tpv("elt"),hL=n($("elh").value);
+  if(isNaN(tH)||isNaN(hH)||isNaN(tL)||isNaN(hL))return;
+  var sec=$("amode").value==="sec",tH2=tH,tL2=tL,hH2=hH,hL2=hL,lv=L.slice(),rows=[];
+  if(sec){
+    if(L.some(isNaN)){e.textContent="Для вторичного порта введите уровни основного порта MHWS, MHWN, MLWN, MLWS.";return}
+    var dH=[pd($("hrad").value),pd($("hrbd").value)],dL=[pd($("lrad").value),pd($("lrbd").value)],rH=[tpv("hra"),tpv("hrb")],rL=[tpv("lra"),tpv("lrb")];
+    var dd=["d1","d2","d3","d4"].map(function(i){return pn($(i).value)}),z=pn($("zc").value);if(isNaN(z))z=0;
+    if(dH.concat(dL,rH,rL,dd).some(isNaN)){e.textContent="Введите все разности времени и высот вторичного порта (время в формате ±ччмм, например +0120).";return}
+    var dtH=interpT(tH,[rH[0],dH[0]],[rH[1],dH[1]]),dtL=interpT(tL,[rL[0],dL[0]],[rL[1],dL[1]]);
+    tH2=tH+dtH;tL2=tL+dtL;
+    var fH=L[0]===L[1]?0:(hH-L[1])/(L[0]-L[1]),fL=L[2]===L[3]?0:(hL-L[2])/(L[3]-L[2]);
+    var dhH=dd[1]+fH*(dd[0]-dd[1]),dhL=dd[2]+fL*(dd[3]-dd[2]);
+    hH2=hH+dhH+z;hL2=hL+dhL+z;
+    if(fH<-0.05||fH>1.05||fL<-0.05||fL>1.05)w.push("Высота основного порта вне диапазона сизигия–квадратура: применена экстраполяция.");
+    lv=[L[0]+dd[0],L[1]+dd[1],L[2]+dd[2],L[3]+dd[3]];
+    rows.push(["Поправка времени ПВ / МВ",(dtH>=0?"+":"−")+hm(Math.abs(dtH))+" / "+(dtL>=0?"+":"−")+hm(Math.abs(dtL))]);
+    rows.push(["Поправка высоты ПВ / МВ",sg(dhH+z)+" / "+sg(dhL+z)+" м"]);
+  }
+  rows.unshift(["ПВ порта",fT(tH2)+" · "+sg(hH2)+" м"],["МВ порта",fT(tL2)+" · "+sg(hL2)+" м"]);
+  if(!lv.some(isNaN))rows.push(["MHWS / MHWN / MLWN / MLWS",lv.map(function(x){return x.toFixed(2)}).join(" / ")]);
+  var DHL=((tL2-tH2)%24+24)%24,DLH=((tH2-tL2)%24+24)%24,t1,h1,t2,h2,D;
+  if(DHL<=DLH){t1=tH2;h1=hH2;t2=tL2;h2=hL2;D=DHL}else{t1=tL2;h1=hL2;t2=tH2;h2=hH2;D=DLH}
+  $("atb").innerHTML=rows.map(function(r){return "<tr><td>"+r[0]+"</td><td>"+r[1]+"</td></tr>"}).join("");
+  ["ah","ahn","aukc","abr"].forEach(function(i){$(i).textContent="—"});$("ahd").textContent="";$("aht").textContent="";
+  if(D<0.5||D>9||hH2<=hL2){e.textContent="ПВ и МВ должны быть соседними событиями (интервал 0,5–9 ч, ПВ выше МВ). Сейчас интервал "+D.toFixed(1)+" ч.";$("aout").hidden=false;return}
+  var Hm=(h1+h2)/2,A=(h1-h2)/2,tx=tpv("atx"),hx=NaN;
+  if(!isNaN(tx)){var t=((tx-t1)%24+24)%24;if(t<=D){hx=Hm+A*Math.cos(Math.PI*t/D);$("ah").textContent=sg(hx)+" м";$("ahd").textContent=h2>h1?"вода прибывает":"вода убывает"}else w.push("Момент вне интервала между введёнными ПВ и МВ.")}
+  var dep=n($("adepth").value),dr=n($("adraft").value),mg=n($("amargin").value);if(isNaN(mg))mg=0;
+  if(!isNaN(dep)&&!isNaN(dr)){
+    var need=dr+mg-dep;$("ahn").textContent=sg(need)+" м";
+    var mx=Math.max(h1,h2),mn=Math.min(h1,h2);
+    if(need>mx)$("aht").textContent="В этом цикле вода не достигает нужной высоты.";
+    else if(need<mn)$("aht").textContent="Нужная высота обеспечена на всём интервале "+fT(t1)+"–"+fT(t2)+".";
+    else{var tt=t1+D/Math.PI*Math.acos((need-Hm)/A);$("aht").textContent=(h2>h1?"Вода поднимется до нужной высоты в ":"Вода опустится до нужной высоты в ")+fT(tt)}
+    if(!isNaN(hx)){var u=dep+hx-dr;$("aukc").textContent=sg(u)+" м";if(u<mg)w.push("Запас под килем меньше заданного.")}
+  }
+  var cl=n($("abridge").value),air=n($("aship").value);
+  if(!isNaN(cl)&&!isNaN(air)&&!isNaN(hx)){if(isNaN(lv[0]))w.push("Для просвета под мостом введите MHWS.");else{var c=cl+lv[0]-hx-air;$("abr").textContent=sg(c)+" м";if(c<0)w.push("Просвет под мостом отрицательный: проход невозможен.")}}
+  $("awarn").textContent=w.join(" ");$("aout").hidden=false;
+}
+["amode","eht","ehh","elt","elh","sa1","sa2","sa3","sa4","hra","hrad","hrb","hrbd","lra","lrad","lrb","lrbd","d1","d2","d3","d4","zc","atx","adraft","adepth","amargin","abridge","aship"].forEach(function(id){$(id).addEventListener("input",acalc);$(id).addEventListener("change",acalc)});
+$("aex").onclick=function(){
+  var v={amode:"sec",eht:"12:40",ehh:"4.7",elt:"18:55",elh:"1.0",sa1:"5.0",sa2:"3.9",sa3:"1.6",sa4:"0.6",hra:"02:00",hrad:"+0020",hrb:"08:00",hrbd:"+0040",lra:"05:00",lrad:"+0015",lrb:"11:00",lrbd:"+0035",d1:"-0.4",d2:"-0.3",d3:"-0.1",d4:"-0.1",zc:"0",atx:"15:30",adraft:"5.2",adepth:"3.0",amargin:"0.5",abridge:"12",aship:"9"};
+  for(var k in v)$(k).value=v[k];acalc();
+};
+
+function niceStep(x){var p=Math.pow(10,Math.floor(Math.log(x)/Math.LN10)),f=x/p;return (f<1.5?1:f<3.5?2:f<7.5?5:10)*p}
+function setChart(svg,note){$("pch").innerHTML=svg;$("pchn").textContent=note}
+function chartSVG(pts,ext,cur,z,s0,s1,o){
+  if(!pts.length)return "";
+  var W=720,H=300,l=46,r=14,tp=26,b=40,iw=W-l-r,ih=H-tp-b,span=(s1-s0)/3600000,zz=z*3600000;
+  var ys=pts.map(function(p){return p[1]}).concat([0]),mn=Math.min.apply(null,ys),mx=Math.max.apply(null,ys),pp=(mx-mn)*0.14||0.5;mn-=pp;mx+=pp;
+  function X(ms){return l+(ms-s0)/(s1-s0)*iw}
+  function Y(v){return tp+(mx-v)/(mx-mn)*ih}
+  function hh(ms){var d=new Date(ms+zz);return pad(d.getUTCHours(),2)+":"+pad(d.getUTCMinutes(),2)}
+  var g="",st=niceStep((mx-mn)/5),v,vv,k;
+  for(v=Math.ceil(mn/st)*st;v<=mx+1e-9;v+=st){vv=Math.round(v/st)*st;var yy=Y(vv).toFixed(1);g+="<line x1='"+l+"' x2='"+(W-r)+"' y1='"+yy+"' y2='"+yy+"' style='stroke:var(--bd)'/><text x='"+(l-6)+"' y='"+(+yy+4)+"' text-anchor='end' style='fill:var(--mut)'>"+vv.toFixed(1)+"</text>"}
+  var tick=span<=10?1:span<=30?3:span<=54?6:24,tm=tick*3600000;
+  for(k=Math.ceil((s0+zz)/tm)*tm-zz;k<=s1+1;k+=tm){
+    var xx=X(k).toFixed(1),lc=new Date(k+zz),mid=lc.getUTCHours()===0&&lc.getUTCMinutes()===0,dt=pad(lc.getUTCDate(),2)+"."+pad(lc.getUTCMonth()+1,2);
+    g+="<line x1='"+xx+"' x2='"+xx+"' y1='"+tp+"' y2='"+(H-b)+"' style='stroke:var(--bd);"+(mid&&!o.noDate?"stroke-width:2":"stroke-opacity:.5")+"'/>";
+    g+="<text x='"+xx+"' y='"+(H-b+15)+"' text-anchor='middle' style='fill:var(--mut)'>"+(tick>=24?dt:hh(k))+"</text>";
+    if(mid&&tick<24&&!o.noDate)g+="<text x='"+xx+"' y='"+(H-b+30)+"' text-anchor='middle' style='fill:var(--tx);font-weight:700'>"+dt+"</text>";
+  }
+  var y0=Y(0).toFixed(1);
+  g+="<line x1='"+l+"' x2='"+(W-r)+"' y1='"+y0+"' y2='"+y0+"' style='stroke:var(--mut);stroke-dasharray:5 4'/>";
+  var d="";pts.forEach(function(p,i){d+=(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)+" "});
+  g+="<path d='"+d+"' style='fill:none;stroke:var(--ac);stroke-width:2.5;stroke-linejoin:round'/>";
+  ext.forEach(function(e){
+    if(e[0]<s0||e[0]>s1)return;
+    var cx=X(e[0]).toFixed(1),cy=Y(e[2]);
+    g+="<circle cx='"+cx+"' cy='"+cy.toFixed(1)+"' r='4.5' style='fill:"+(e[1]?"#e5484d":"#2f9e6a")+"'/>";
+    if(o.lab)g+="<text x='"+cx+"' y='"+(e[1]?cy-9:cy+17).toFixed(1)+"' text-anchor='middle' style='fill:var(--tx);font-size:10px'>"+(o.lab>=2?hh(e[0])+" ":"")+sg(e[2])+"</text>";
+  });
+  if(cur&&cur[0]>=s0&&cur[0]<=s1){
+    var cx2=X(cur[0]).toFixed(1);
+    g+="<line x1='"+cx2+"' x2='"+cx2+"' y1='"+tp+"' y2='"+(H-b)+"' style='stroke:var(--ok);stroke-width:2;stroke-dasharray:6 4'/><circle cx='"+cx2+"' cy='"+Y(cur[1]).toFixed(1)+"' r='5' style='fill:var(--ok)'/><text x='"+cx2+"' y='"+(tp-8)+"' text-anchor='middle' style='fill:var(--ok);font-weight:700'>"+hh(cur[0])+" · "+sg(cur[1])+" м</text>";
+  }
+  g+="<text x='"+(l-6)+"' y='"+(tp-10)+"' text-anchor='end' style='fill:var(--mut)'>м</text>";
+  return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 "+W+" "+H+"' style='width:100%;height:auto;display:block;font:11px system-ui,sans-serif'>"+g+"</svg>";
+}
+
+function gC(B,e){
+  var t=($("gc").value||"").replace(",",".").replace("−","-").replace("–","-").replace(/\s/g,"");
+  if(!t){e.textContent="Введите коэффициент C в профиле судна.";return null}
+  var p=t.split("-").map(Number);
+  if(p.length>2||p.some(function(x){return isNaN(x)||x<=0})){e.textContent="Коэффициент C: число (например 0.88) или диапазон 0.62-1.00.";return null}
+  return p;
+}
+function gcalc(){
+  var e=$("gerr"),w=[];e.textContent="";$("gout").hidden=true;
+  $("gdirect").hidden=$("gtm").value!=="direct";$("gmeas").hidden=$("gtm").value!=="meas";
+  var B=n($("gB").value),T;
+  if($("gtm").value==="meas"){
+    var dt=n($("gdt").value),k=n($("gn").value);
+    if(isNaN(dt)||isNaN(k)||k<1){$("gts").textContent="";return}
+    T=dt/k;$("gts").textContent="T = Δt / n = "+T.toFixed(2)+" с";
+    if(k<5)w.push("Замерено меньше 5 колебаний: точность низкая.");
+  }else T=n($("gT").value);
+  if(isNaN(T)||isNaN(B))return;
+  if(T<=0||B<=0){e.textContent="T и B должны быть больше нуля.";return}
+  var cs=gC(B,e);if(!cs)return;
+  function H(c,t){return Math.pow(c*B/t,2)}
+  var hs=cs.map(function(c){return H(c,T)}),lo=Math.min.apply(null,hs),hi=Math.max.apply(null,hs),cm=(Math.min.apply(null,cs)+Math.max.apply(null,cs))/2;
+  $("gh").textContent=(hs.length>1?lo.toFixed(2)+" – "+hi.toFixed(2):lo.toFixed(2))+" м";
+  var gmin=n($("gmin").value),st="";
+  if(!isNaN(gmin)){st=lo>=gmin?"h не ниже допустимой ("+gmin.toFixed(2)+" м)":hi<gmin?"h НИЖЕ допустимой ("+gmin.toFixed(2)+" м)":"По диапазону C нельзя однозначно сравнить с допустимой h ("+gmin.toFixed(2)+" м)"}
+  $("gst").textContent=st;
+  var rows=[["Период T",T.toFixed(2)+" с"],["Ширина B",B.toFixed(2)+" м"],["Коэффициент C",cs.length>1?cs[0].toFixed(2)+" – "+cs[1].toFixed(2):cs[0].toFixed(3)]];
+  if(T>0.5)rows.push(["При T ± 0,5 с (C = "+cm.toFixed(2)+")",H(cm,T+0.5).toFixed(2)+" – "+H(cm,T-0.5).toFixed(2)+" м"]);
+  $("gtb").innerHTML=rows.map(function(r){return "<tr><td>"+r[0]+"</td><td>"+r[1]+"</td></tr>"}).join("");
+  if(lo<0.15)w.push("h меньше 0,15 м: проверьте замер и коэффициент. Остойчивость может быть недостаточной, сверьтесь с информацией об остойчивости судна.");
+  if(T<3)w.push("Очень малый период: проверьте замер.");
+  if(T>25)w.push("Очень большой период: проверьте замер, остойчивость может быть мала.");
+  $("gw").textContent=w.join(" ");$("gout").hidden=false;
+}
+["gname","gB","gL","gmin","gtm","gT","gdt","gn","gc"].forEach(function(id){$(id).addEventListener("input",gcalc);$(id).addEventListener("change",gcalc)});
+$("gsave").onclick=function(){try{localStorage.setItem("vessel_profile",JSON.stringify({name:$("gname").value,B:$("gB").value,L:$("gL").value,c:$("gc").value,min:$("gmin").value}));$("gpm").textContent="Профиль сохранён на этом устройстве."}catch(x){$("gpm").textContent="Не удалось сохранить профиль в этом окне."}};
+(function(){try{var p=JSON.parse(localStorage.getItem("vessel_profile")||"null");if(p){$("gname").value=p.name||"";$("gB").value=p.B||"";$("gL").value=p.L||"";$("gc").value=p.c||"";$("gmin").value=p.min||"";$("gpm").textContent="Загружен профиль"+(p.name?": "+p.name:"")+"."}}catch(x){}})();
+var swT=null,swS=0;
+$("gsw").onclick=function(){
+  if(swT===null){swS=Date.now();$("gsw").textContent="■ Стоп · 0.0 с";swT=setInterval(function(){$("gsw").textContent="■ Стоп · "+((Date.now()-swS)/1000).toFixed(1)+" с"},100)}
+  else{clearInterval(swT);swT=null;$("gdt").value=((Date.now()-swS)/1000).toFixed(1);$("gsw").textContent="▶ Секундомер: старт";gcalc()}
+};
+
+function kcalc(){
+  var e=$("kerr"),w=[];e.textContent="";$("kout").hidden=true;
+  var B=n($("gB").value),th=n($("kth").value),d=n($("gd").value);
+  if(isNaN(th)||isNaN(B))return;
+  if(B<=0){e.textContent="Введите ширину судна B в профиле.";return}
+  th=Math.abs(th);
+  if(th>=90){e.textContent="Угол крена должен быть меньше 90°.";return}
+  var dd=B/2*Math.sin(th*Math.PI/180);
+  $("kdd").textContent="+"+dd.toFixed(2)+" м";
+  var rows=[["Ширина B",B.toFixed(2)+" м"],["Угол крена θ",th.toFixed(1)+"°"]];
+  if(!isNaN(d)&&d>0){$("kdr").textContent=(d+dd).toFixed(2)+" м";rows.push(["Осадка прямая d",d.toFixed(2)+" м"])}
+  else{$("kdr").textContent="—";w.push("Введите среднюю осадку d в профиле, чтобы получить итоговую осадку.")}
+  $("ktb").innerHTML=rows.map(function(r){return "<tr><td>"+r[0]+"</td><td>"+r[1]+"</td></tr>"}).join("");
+  if(th>10)w.push("Формула приближённая: для углов больше 10° погрешность растёт.");
+  $("kw").textContent=w.join(" ");$("kout").hidden=false;
+}
+["gB","gd","kth"].forEach(function(id){$(id).addEventListener("input",kcalc);$(id).addEventListener("change",kcalc)});
+
+(function(){
+  var w=$("t1wrap"),btns=document.querySelectorAll("#t1seg button");
+  function mark(){var r=w.scrollLeft<w.clientWidth/2;btns.forEach(function(b){b.classList.toggle("on",(b.getAttribute("data-p")==="res")===r)})}
+  window.showP=function(p){w.scrollTo({left:p==="res"?0:w.scrollWidth,behavior:"smooth"})};
+  btns.forEach(function(b){b.onclick=function(){window.showP(b.getAttribute("data-p"))}});
+  w.addEventListener("scroll",mark);
+  if(window.matchMedia("(max-width:599px)").matches)setTimeout(function(){w.scrollLeft=w.scrollWidth;mark()},50);
+})();
+
+function nowFields(){
+  var z=n($("zn").value);
+  if(isNaN(z)){setNow();return}
+  var d=new Date(Date.now()+($("zs").value==="E"?1:-1)*z*3600000);
+  $("date").value=d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1,2)+"-"+pad(d.getUTCDate(),2);
+  $("time").value=pad(d.getUTCHours(),2)+":"+pad(d.getUTCMinutes(),2)+":"+pad(d.getUTCSeconds(),2);
+}
+function skyCalc(){
+  var info=$("skyinfo"),lat=getC("la","N"),lon=getC("lo","E"),z=n($("zn").value);
+  if(isNaN(lat)||isNaN(lon)||isNaN(z)||!$("date").value||!$("time").value){info.textContent="Введите координаты, дату, время и пояс на вкладке «Расчёт поправки компаса» или нажмите «Обновить».";$("skytb").innerHTML="";$("skychart").innerHTML="";$("skyn").textContent="";return}
+  var ds=$("date").value.split("-"),ts=$("time").value.split(":"),tzh=($("zs").value==="E"?1:-1)*z;
+  var utc=Date.UTC(+ds[0],+ds[1]-1,+ds[2],+ts[0],+ts[1],+(ts[2]||0))-tzh*3600000,u=new Date(utc);
+  var g=gmst(utc),sn=sunAt(utc),rs=azAlt(lat,sn.dec,n360(sn.gha+lon)),list=[{n:"Солнце",az:rs.az,h:rs.h,sun:true}];
+  ST.forEach(function(s,i){var st=starAt(utc,s),r=azAlt(lat,st.dec,n360(g+st.eq+st.sha+lon));list.push({n:(i<57?(i+1)+" ":"")+s[0],az:r.az,h:r.h})});
+  var minH=+$("skymin").value,vis=list.filter(function(o){return o.h>=minH}),so=$("skysort").value;
+  vis.sort(function(a,b){return so==="az"?a.az-b.az:so==="n"?a.n.localeCompare(b.n,"ru"):b.h-a.h});
+  var ph=rs.h>0?"день":rs.h>-6?"гражданские сумерки":rs.h>-12?"навигационные сумерки (удобно для звёзд и горизонта)":rs.h>-18?"астрономические сумерки":"ночь";
+  info.textContent="φ "+(lat>=0?"N ":"S ")+dm(Math.abs(lat))+", λ "+(lon>=0?"E ":"W ")+dm(Math.abs(lon))+" · UTC "+pad(u.getUTCDate(),2)+"."+pad(u.getUTCMonth()+1,2)+"."+u.getUTCFullYear()+" "+pad(u.getUTCHours(),2)+":"+pad(u.getUTCMinutes(),2)+":"+pad(u.getUTCSeconds(),2)+" · Солнце h = "+rs.h.toFixed(1)+"°: "+ph;
+  $("skytb").innerHTML="<tr><td class='h'>Светило</td><td class='h' style='text-align:right'>ИП</td><td class='h' style='text-align:right'>Высота h</td></tr>"+vis.map(function(o){return "<tr><td>"+o.n+"</td><td style='text-align:right'>"+o.az.toFixed(1)+"°</td><td>"+o.h.toFixed(1)+"°</td></tr>"}).join("");
+  $("skyn").textContent="Светил в списке: "+vis.length+" из "+list.length+"."+(rs.h>-6?" Небо светлое: звёзды невооружённым глазом не видны, показаны расчётные положения.":"");
+  var c=160,R=135,sv="";
+  [0,30,60].forEach(function(a){var r=R*(90-a)/90;sv+="<circle cx='"+c+"' cy='"+c+"' r='"+r.toFixed(1)+"' style='fill:none;stroke:var(--bd)'/>"+(a>0?"<text x='"+(c+3)+"' y='"+(c-r-2).toFixed(1)+"' style='fill:var(--mut);font-size:9px'>"+a+"°</text>":"")});
+  sv+="<line x1='"+c+"' x2='"+c+"' y1='"+(c-R)+"' y2='"+(c+R)+"' style='stroke:var(--bd)'/><line x1='"+(c-R)+"' x2='"+(c+R)+"' y1='"+c+"' y2='"+c+"' style='stroke:var(--bd)'/>";
+  [["N",c,c-R-6],["S",c,c+R+14],["E",c+R+8,c+4],["W",c-R-8,c+4]].forEach(function(t){sv+="<text x='"+t[1]+"' y='"+t[2]+"' text-anchor='middle' style='fill:var(--tx);font-weight:700;font-size:12px'>"+t[0]+"</text>"});
+  vis.forEach(function(o){var r=R*(90-o.h)/90,a=o.az*Math.PI/180,x=c+r*Math.sin(a),y=c-r*Math.cos(a);
+    sv+="<circle cx='"+x.toFixed(1)+"' cy='"+y.toFixed(1)+"' r='"+(o.sun?7:3.5)+"' style='fill:"+(o.sun?"#f5b301":o.n==="Polaris"?"#fff;stroke:#8a99ad;stroke-width:1":"var(--ac)")+"'/><text x='"+(x+6).toFixed(1)+"' y='"+(y+3).toFixed(1)+"' style='fill:var(--tx);font-size:8px'>"+o.n.replace(/^\d+ /,"")+"</text>"});
+  $("skychart").innerHTML="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 340' style='width:100%;max-width:520px;height:auto;display:block;margin:0 auto;font-family:system-ui,sans-serif'><g transform='translate(0,6)'>"+sv+"</g></svg>";
+}
+$("skyup").onclick=function(){
+  nowFields();var m=$("skymsg");m.className="note";m.textContent="Определяю координаты…";
+  if(!navigator.geolocation){m.className="note err";m.textContent="GPS недоступен: время обновлено, координаты прежние.";skyCalc();return}
+  navigator.geolocation.getCurrentPosition(function(p){setC("la",p.coords.latitude,"N","S");setC("lo",p.coords.longitude,"E","W");m.textContent="Координаты и время обновлены (точность ≈ "+Math.round(p.coords.accuracy)+" м)";skyCalc()},function(e){m.className="note err";m.textContent="GPS не получен ("+e.message+"): время обновлено, координаты прежние.";skyCalc()},{enableHighAccuracy:true,timeout:15000});
+};
+["skymin","skysort"].forEach(function(id){$(id).addEventListener("change",skyCalc)});
+$("gref").onchange=function(){if(this.value){$("gc").value=this.value;gcalc()}};
+$("gccb").onclick=function(){
+  var B=n($("gB").value),L=n($("gL").value),d=n($("gd").value),m=$("gpm");
+  if(isNaN(B)||isNaN(L)||isNaN(d)||d<=0){m.textContent="Для расчёта C введите B, L и осадку d (блок «Приращение осадки при крене»).";return}
+  var c=0.7487+0.0456*(B/d)-0.000864*L;$("gc").value=c.toFixed(3);m.textContent="C = 0,7487 + 0,0456·(B/d) − 0,000864·L = "+c.toFixed(3)+". Нажмите «Сохранить профиль судна».";gcalc();
+};
+
+(function(){
+  var m=$("tabsMenu"),btn=$("menuBtn");
+  btn.onclick=function(e){e.stopPropagation();m.classList.toggle("open")};
+  document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click",function(){$("menuLbl").textContent=b.textContent;m.classList.remove("open")})});
+  document.addEventListener("click",function(e){if(!$("menu").contains(e.target))m.classList.remove("open")});
+})();
+
+var DBSEL=null,DBL=null,DBLOAD=0;
+var TBASE={SA:[0,0,1,0,0,0,"one"],SSA:[0,0,2,0,0,0,"one"],MM:[0,1,0,-1,0,0,"MM"],MSF:[0,2,-2,0,0,0,"M2"],MF:[0,2,0,0,0,0,"MF"],Q1:[1,-3,1,1,0,90,"O1"],O1:[1,-2,1,0,0,90,"O1"],P1:[1,0,-1,0,0,90,"one"],K1:[1,0,1,0,0,-90,"K1"],S1:[1,0,0,0,0,0,"one"],"2Q1":[1,-4,1,2,0,90,"O1"],SIGMA1:[1,-4,3,0,0,90,"O1"],RHO1:[1,-3,3,-1,0,90,"O1"],J1:[1,1,1,-1,0,-90,"J1"],OO1:[1,2,1,0,0,-90,"OO1"],PI1:[1,0,-2,0,1,90,"one"],PSI1:[1,0,2,0,-1,-90,"one"],PHI1:[1,0,3,0,0,-90,"one"],"2N2":[2,-4,2,2,0,0,"M2"],MU2:[2,-4,4,0,0,0,"M2"],N2:[2,-3,2,1,0,0,"M2"],NU2:[2,-3,4,-1,0,0,"M2"],M2:[2,-2,2,0,0,0,"M2"],LAMBDA2:[2,-1,0,1,0,180,"M2"],L2:[2,-1,2,-1,0,180,"L2"],T2:[2,0,-1,0,1,0,"one"],S2:[2,0,0,0,0,0,"one"],R2:[2,0,1,0,-1,180,"one"],K2:[2,0,2,0,0,0,"K2"]};
+var TCOMP={M3:[["M2",1.5]],M4:[["M2",2]],M6:[["M2",3]],M8:[["M2",4]],MS4:[["M2",1],["S2",1]],MN4:[["M2",1],["N2",1]],S4:[["S2",2]],"2MS6":[["M2",2],["S2",1]],MK3:[["M2",1],["K1",1]],"2MK3":[["M2",2],["K1",-1]],MO3:[["M2",1],["O1",1]],SO3:[["S2",1],["O1",1]],SK3:[["S2",1],["K1",1]],S3:[["S2",1.5]],N4:[["N2",2]],"2MK5":[["M2",2],["K1",1]],"2MO5":[["M2",2],["O1",1]],MK4:[["M2",1],["K2",1]],SK4:[["S2",1],["K2",1]],"2MN6":[["M2",2],["N2",1]],"2MK6":[["M2",2],["K2",1]],"2SM6":[["S2",2],["M2",1]],MSK6:[["M2",1],["S2",1],["K2",1]],"2SM2":[["S2",2],["M2",-1]],MKS2:[["M2",1],["K2",1],["S2",-1]],MSN2:[["M2",1],["S2",1],["N2",-1]],"2MN2S2":[["M2",2],["N2",1],["S2",-2]],SN4:[["S2",1],["N2",1]]};
+function tFU(k,I,nu,xi,p){
+  var sI=Math.sin(I),c2=Math.pow(Math.cos(I/2),2);
+  if(k==="one")return [1,0];
+  if(k==="M2")return [c2*c2/0.9154,2*xi-2*nu];
+  if(k==="O1")return [sI*c2/0.3800,2*xi-nu];
+  if(k==="K1"){var s2=Math.sin(2*I),np=Math.atan(s2*Math.sin(nu)/(s2*Math.cos(nu)+0.3347));return [Math.sqrt(0.8965*s2*s2+0.6001*s2*Math.cos(nu)+0.1006),-np]}
+  if(k==="K2"){var q=sI*sI,npp=0.5*Math.atan(q*Math.sin(2*nu)/(q*Math.cos(2*nu)+0.0727));return [Math.sqrt(19.0444*q*q+2.7702*q*Math.cos(2*nu)+0.0981),-2*npp]}
+  if(k==="J1")return [Math.sin(2*I)/0.7214,-nu];
+  if(k==="OO1")return [sI*Math.pow(Math.sin(I/2),2)/0.0164,-2*xi-nu];
+  if(k==="MM")return [(2/3-sI*sI)/0.5021,0];
+  if(k==="MF")return [sI*sI/0.1578,-2*xi];
+  if(k==="L2"){var P=p*D-xi,t2=Math.pow(Math.tan(I/2),2),Ra=1/Math.sqrt(1-12*t2*Math.cos(2*P)+36*t2*t2),R=Math.atan2(Math.sin(2*P),1/(6*t2)-Math.cos(2*P)),m=tFU("M2",I,nu,xi,p);return [m[0]*Ra,m[1]-R]}
+  return [1,0];
+}
+function tNodal(Nd){
+  var OM=23.452*D,IN=5.145*D,n=Nd*D,I=Math.acos(Math.cos(IN)*Math.cos(OM)-Math.sin(IN)*Math.sin(OM)*Math.cos(n)),a=Math.tan(n/2);
+  var x1=2*Math.atan(Math.sin((OM-IN)/2)/Math.sin((OM+IN)/2)*a),x2=2*Math.atan(Math.cos((OM-IN)/2)/Math.cos((OM+IN)/2)*a),tp=2*Math.PI;
+  x1+=tp*Math.round((n-x1)/tp);x2+=tp*Math.round((n-x2)/tp);
+  return {I:I,nu:(x2-x1)/2,xi:n-(x1+x2)/2};
+}
+function tSpec(name){
+  var b=TBASE[name];
+  if(b)return {v:b.slice(0,5),off:b[5],parts:[[name,1]]};
+  var c=TCOMP[name];if(!c)return null;
+  var v=[0,0,0,0,0],off=0;
+  c.forEach(function(e){var bb=TBASE[e[0]];for(var i=0;i<5;i++)v[i]+=e[1]*bb[i];off+=e[1]*bb[5]});
+  return {v:v,off:off,parts:c};
+}
+function tPredict(flat,names,msArr){
+  var t0=(msArr[0]+msArr[msArr.length-1])/2,jd=t0/86400000+2440587.5,T=(jd-2451545)/36525;
+  var s=n360(218.3164477+481267.88123421*T-0.0015786*T*T),h=n360(280.46646+36000.76983*T+0.0003032*T*T),p=n360(83.3532465+4069.0137287*T-0.01032*T*T),N=n360(125.0445479-1934.1362891*T+0.0020754*T*T),p1=n360(282.93735+1.71946*T+0.00046*T*T);
+  var nd=tNodal(N),T0=15*((t0/3600000)%24)-180,out=new Array(msArr.length),i,k;
+  for(i=0;i<out.length;i++)out[i]=0;
+  for(k=0;k<flat.length;k+=3){
+    var sp=tSpec(names[flat[k]]);if(!sp)continue;
+    var f=1,u=0;
+    sp.parts.forEach(function(e){var fu=tFU(TBASE[e[0]][6],nd.I,nd.nu,nd.xi,p);f*=Math.pow(fu[0],Math.abs(e[1]));u+=e[1]*fu[1]});
+    var v=sp.v,V0=v[0]*T0+v[1]*s+v[2]*h+v[3]*p+v[4]*p1+sp.off+u/D,rate=15*v[0]+0.5490165*v[1]+0.0410686*v[2]+0.0046418*v[3]+0.000002*v[4],A=flat[k+1]*f,g=flat[k+2];
+    for(i=0;i<out.length;i++)out[i]+=A*Math.cos((V0+rate*(msArr[i]-t0)/3600000-g)*D);
+  }
+  return out;
+}
+function tExtremes(ms,h){
+  var r=[],i;
+  for(i=1;i<h.length-1;i++){
+    var a=h[i-1],b=h[i],c=h[i+1],hw=b>a&&b>=c,lw=b<a&&b<=c;if(!hw&&!lw)continue;
+    var den=a-2*b+c,dl=den?0.5*(a-c)/den:0;r.push([ms[i]+dl*(ms[1]-ms[0]),hw,b-0.25*(a-c)*dl]);
+  }
+  return r;
+}
+
+var RUA={"россия":["russia"],"украин":["ukraine"],"турц":["turkiye"],"греци":["greece"],"болгари":["bulgaria"],"румыни":["romania"],"эстони":["estonia"],"латви":["latvia"],"литв":["lithuania"],"польш":["poland"],"финлянд":["finland"],"швец":["sweden"],"норвег":["norway"],"дани":["denmark"],"герман":["germany"],"нидерланд":["netherlands"],"голланд":["netherlands"],"бельги":["belgium"],"франц":["france"],"великобритан":["united kingdom"],"англи":["united kingdom"],"ирланд":["ireland"],"исланд":["iceland"],"испани":["spain"],"португал":["portugal"],"итали":["italy"],"хорвати":["croatia"],"словени":["slovenia"],"египет":["egypt"],"китай":["china"],"япони":["japan"],"тайван":["taiwan"],"гонконг":["hong kong"],"сингапур":["singapore"],"вьетнам":["vietnam"],"таиланд":["thailand"],"малайзи":["malaysia"],"индонези":["indonesia"],"филиппин":["philippines"],"индия":["india"],"пакистан":["pakistan"],"бангладеш":["bangladesh"],"шри-ланк":["sri lanka"],"шри ланк":["sri lanka"],"иран":["iran"],"оман":["oman"],"йемен":["yemen"],"австрали":["australia"],"новая зеланд":["new zealand"],"новой зеланд":["new zealand"],"сша":["united states"],"америк":["united states"],"канад":["canada"],"мексик":["mexico"],"куба":["cuba"],"панам":["panama"],"бразили":["brazil"],"аргентин":["argentina"],"чили":["chile"],"перу":["peru"],"колумби":["colombia"],"венесуэл":["venezuela"],"эквадор":["ecuador"],"юар":["south africa"],"южная афр":["south africa"],"кени":["kenya"],"танзани":["tanzania"],"мозамбик":["mozambique"],"мадагаскар":["madagascar"],"нигери":["nigeria"],"гана":["ghana"],"сенегал":["senegal"],"ангол":["angola"],"гренланд":["greenland"],"фарер":["faroe"],"бермуд":["bermuda"],"багам":["bahamas"],"ямайк":["jamaica"],"гаити":["haiti"],"фиджи":["fiji"],"антаркт":["antarctica"],
+"санкт-петербург":["stpetersburg","kronstadt"],"петербург":["stpetersburg","kronstadt"],"кронштадт":["kronstadt"],"гогланд":["hogland"],"стамбул":["ioc ista"],"варна":["varna"],"бургас":["burgas"],"констанц":["ioc csta"],"одесс":["odesa","odessa"],"пирей":["piraeus","pireas"],"салоники":["thessaloniki"],"ираклион":["hrakleio"],"корфу":["kerkyra"],"родос":["rhodes"],"анталь":["antalya"],"босфор":["ioc ista"],
+"таллин":["tallinn"],"рига":["riga"],"вентспилс":["ventspils"],"лиепа":["liepaja"],"клайпед":["klaipeda"],"гданьск":["gdansk"],"хельсинк":["helsinki"],"котка":["kotka"],"хамина":["hamina"],"стокгольм":["stockholm"],"гетеборг":["goteborg","gothenburg"],"гётеборг":["goteborg","gothenburg"],"осло":["oslo"],"берген":["bergen"],"тромс":["troms"],"копенгаген":["kobenhavn","copenhagen"],"гамбург":["hamburg","cuxhaven"],"бремерхафен":["bremerhaven"],"куксхафен":["cuxhaven"],"киль":["kiel"],"любек":["lubeck","travemunde"],"роттердам":["rotterdam"],"амстердам":["amsterdam","ijmuiden"],"антверпен":["antwerp"],"зеебрюгге":["zeebrugge"],"гавр":["le havre"],"дюнкерк":["dunkerque"],"брест":["brest"],"марсель":["marseille"],"лиссабон":["lisboa","lisbon","cascais"],"гибралтар":["gibraltar"],"алхесирас":["algeciras"],"барселон":["barcelona"],"валенси":["valencia"],"генуя":["genova"],"генуи":["genova"],"неаполь":["napoli"],"ливорно":["livorno"],"палермо":["palermo"],"триест":["trieste"],"сплит":["split"],"александри":["alexandria"],"саутгемптон":["southampton"],"лондон":["london"],"ливерпул":["liverpool"],"дувр":["dover"],"дублин":["dublin"],"рейкьявик":["reykjavik"],"нью-йорк":["new york"],"бостон":["boston"],"майами":["miami"],"хьюстон":["houston"],"галвестон":["galveston"],"сан-франциско":["san francisco"],"лос-анджелес":["los angeles"],"сиэтл":["seattle"],"ванкувер":["vancouver"],"галифакс":["halifax"],"кальяо":["callao"],"вальпараисо":["valparaiso"],"буэнос-айрес":["buenos aires"],"кристобаль":["cristobal"],"гонолулу":["honolulu"],"сидней":["sydney"],"мельбурн":["melbourne"],"окленд":["auckland"],"веллингтон":["wellington"],"йокогама":["yokohama"],"кобе":["kobe"],"осака":["osaka"],"нагоя":["nagoya"],"токио":["tokyo"],"далянь":["dalian"],"сямэнь":["xiamen"],"гаосюн":["kaohsiung"],"маниль":["manila"],"сайгон":["vung tau"],"вунгтау":["vung tau"],"кейптаун":["cape town"],"дурбан":["durban"],"момбас":["mombasa"],"аден":["aden"],"маскат":["muscat"],"карачи":["karachi"],"коломбо":["colombo"],"читтагонг":["chittagong"],"джакарта":["jakarta"],"сингапур":["singapore","keppel","tanjong pagar"]};
+(function(){var n={},k;for(k in RUA)n[k.replace(/-/g," ")]=RUA[k];RUA=n})();
+var RUTR={а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"e",ж:"zh",з:"z",и:"i",й:"y",к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"h",ц:"ts",ч:"ch",ш:"sh",щ:"sch",ъ:"",ы:"y",ь:"",э:"e",ю:"yu",я:"ya"};
+function ruAlts(w){
+  var k,r=[],t;w=w.replace(/ё/g,"е");
+  for(k in RUA){if(w.length>=3&&(w.indexOf(k)===0||(w.length>=4&&k.indexOf(w)===0)))r=r.concat(RUA[k])}
+  if(r.length)return r;
+  t=w.replace(/[а-яё]/g,function(c){return RUTR[c]||""});
+  return t?[t]:[];
+}
+var ZC={"Turkiye":3,"Japan":9,"Norway":1,"Sweden":1,"Denmark":1,"Germany":1,"Netherlands":1,"Belgium":1,"France":1,"Spain":1,"Italy":1,"Poland":1,"Croatia":1,"Slovenia":1,"Greece":2,"Bulgaria":2,"Romania":2,"Finland":2,"Estonia":2,"Latvia":2,"Lithuania":2,"Ukraine":2,"Egypt":2,"Ireland":0,"United Kingdom":0,"Iceland":0,"China":8,"Taiwan":8,"Hong Kong":8,"Singapore":8,"Philippines":8,"Malaysia":8,"Vietnam":7,"Thailand":7,"Pakistan":5,"Bangladesh":6,"Oman":4,"Yemen":3,"Djibouti":3,"Kenya":3,"Tanzania":3,"Madagascar":3,"Mozambique":2,"South Africa":2,"Namibia":2,"Angola":1,"Nigeria":1,"Cameroon":1,"Ghana":0,"Senegal":0,"Mauritania":0,"Argentina":-3,"Peru":-5,"Colombia":-5,"Panama":-5,"Cuba":-5,"Jamaica":-5,"Venezuela":-4,"Puerto Rico":-4,"Costa Rica":-6,"El Salvador":-6,"Guatemala":-6,"Honduras":-6,"Nicaragua":-6,"Belize":-6};
+function dbZone(o){
+  var z=ZC[o.c];if(z===undefined)z=Math.max(-12,Math.min(12,Math.round(o.lo/15)));
+  $("pzn").value=String(Math.abs(z));$("pzs").value=z>=0?"E":"W";return z;
+}
+function dbLoad(cb){
+  if(window.TIDEDB){dbInit();cb(true);return}
+  if(DBLOAD===1)return;DBLOAD=1;
+  var sc=document.createElement("script");sc.src="tides-data.js";
+  sc.onload=function(){DBLOAD=2;dbInit();cb(true)};
+  sc.onerror=function(){DBLOAD=0;cb(false)};
+  document.head.appendChild(sc);
+}
+function dbInit(){
+  if(DBL)return;DBL=[];var R=TIDEDB.ref,S=TIDEDB.sub,i,SN={N:"NOAA",T:"TICON-4",L:"LINZ",K:"Kartverket",J:"JHOD",D:"DMI"};
+  for(i=0;i<R.length;i++)DBL.push({n:R[i][0],c:R[i][1],la:R[i][2],lo:R[i][3],s:SN[R[i][4]]||R[i][4],k:0,i:i,r:R[i][8]});
+  for(i=0;i<S.length;i++)DBL.push({n:S[i][0],c:S[i][1],la:S[i][2],lo:S[i][3],s:SN[S[i][4]]||S[i][4],k:1,i:i,r:S[i][11]});
+  DBL.forEach(function(o){o.f=(o.n+" "+o.c+" "+(o.r||"")).toLowerCase().replace(/[_,\-]/g," ")});
+}
+function dbLabel(o){return o.n+(o.r?", "+o.r:"")+" — "+o.c+(o.k?" (вторичная)":"")}
+function dbFill(list,dist){
+  var s=$("dbres");
+  $("dbinfo").className="note";
+  if(!list.length){s.hidden=true;$("dbinfo").textContent="Ничего не найдено. Попробуйте латиницей или нажмите «Ближайшие» (порты России в базе почти не представлены).";DBSEL=null;return}
+  s.innerHTML=list.map(function(o,j){return "<option value=\""+j+"\">"+dbLabel(o)+(dist?" · "+Math.round(dist[j])+" миль":"")+"</option>"}).join("");
+  s._list=list;s.hidden=false;dbPick(0);
+}
+var ZNOTE="";
+function dbPick(j){var o=$("dbres")._list[j];if(!o)return;DBSEL=o;var z=dbZone(o);ZNOTE=" · пояс выставлен автоматически: "+(z>=0?"E ":"W ")+Math.abs(z)+" (стандартное время, проверьте)";dbRun()}
+$("dbres").onchange=function(){dbPick(+this.value)};
+$("dbfind").onclick=function(){
+  var q=$("dbq").value.trim().toLowerCase().replace(/[_,\-]/g," ");if(!q)return;
+  $("dbinfo").className="note";$("dbinfo").textContent="Загружаю базу…";
+  dbLoad(function(ok){
+    if(!ok){$("dbinfo").className="note err";$("dbinfo").textContent="Файл базы tides-data.js не найден: загрузите его в репозиторий рядом с index.html.";return}
+    var w=q.split(/\s+/).map(function(x){return /[а-яё]/.test(x)?ruAlts(x):[x]});
+    var qq=q.replace(/ё/g,"е"),kk;for(kk in RUA){if(kk.indexOf(" ")>0&&qq.indexOf(kk)===0){w=[RUA[kk]];break}}
+    var r=DBL.filter(function(o){return w.every(function(al){return al.some(function(x){return o.f.indexOf(x)>=0})})});
+    r.sort(function(a,b){var sa=w[0].some(function(x){return a.f.indexOf(x)===0})?0:1,sb=w[0].some(function(x){return b.f.indexOf(x)===0})?0:1;return sa-sb||a.k-b.k||a.n.localeCompare(b.n)});
+    dbFill(r.slice(0,60));
+  });
+};
+$("dbq").addEventListener("keydown",function(e){if(e.key==="Enter")$("dbfind").onclick()});
+$("dbnear").onclick=function(){
+  var la=getC("pl","N"),lo=getC("pn","E"),m=$("dbinfo");
+  if(isNaN(la)||isNaN(lo)){m.className="note err";m.textContent="Введите координаты в блоке «Порт» ниже или нажмите там «Взять координаты с GPS».";return}
+  m.className="note";m.textContent="Загружаю базу…";
+  dbLoad(function(ok){
+    if(!ok){m.className="note err";m.textContent="Файл базы tides-data.js не найден.";return}
+    var a=DBL.map(function(o){var dla=(o.la-la)*D,dlo=(o.lo-lo)*D,x=Math.sin(dla/2)*Math.sin(dla/2)+Math.cos(la*D)*Math.cos(o.la*D)*Math.sin(dlo/2)*Math.sin(dlo/2);return {o:o,d:2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))*3440.065}});
+    a.sort(function(x,y){return x.d-y.d});a=a.slice(0,15);
+    dbFill(a.map(function(x){return x.o}),a.map(function(x){return x.d}));
+  });
+};
+function dbRun(){
+  var o=DBSEL,m=$("dbinfo");if(!o||!window.TIDEDB)return;
+  var z=zoneT(),ds=$("pdate").value.split("-");if(ds.length<3||isNaN(z))return;
+  var s0=Date.UTC(+ds[0],+ds[1]-1,+ds[2])-z*3600000,a=Math.floor(s0/3600000)*3600000-48*3600000,b=s0+10*86400000,ms=[],st=360000,i;
+  for(i=a;i<=b;i+=st)ms.push(i);
+  var R=TIDEDB.ref,rr,sub=null;
+  if(o.k){sub=TIDEDB.sub[o.i];rr=R[sub[5]]}else rr=R[o.i];
+  var h=tPredict(rr[7],TIDEDB.names,ms),z0=rr[6],cd=rr[5],ex=tExtremes(ms,h).map(function(e){return [e[0],e[1],e[2]+z0]});
+  if(sub){
+    ex=ex.map(function(e){
+      var hi=e[1],hv=hi?sub[7]:sub[8],tm=(hi?sub[9]:sub[10])*60000;
+      return [e[0]+tm,hi,sub[6]?e[2]*hv:e[2]+hv];
+    }).sort(function(x,y){return x[0]-y[0]});
+  }
+  var T=[],V=[],j=0,hs;
+  for(i=a;i<=b;i+=3600000){
+    var v;
+    if(!sub){var idx=Math.round((i-a)/st);v=h[idx]+z0}
+    else{
+      while(j<ex.length-2&&ex[j+1][0]<=i)j++;
+      var e1=ex[j],e2=ex[j+1];
+      v=(i<e1[0]||i>e2[0])?null:e1[2]+(e2[2]-e1[2])*(1-Math.cos(Math.PI*(i-e1[0])/(e2[0]-e1[0])))/2;
+    }
+    T.push(i);V.push(v);
+  }
+  TD={t:T,v:V,ext:ex,label:cd==="MSL"?"среднего уровня моря":"нуля глубин ("+cd+")",db:1};
+  var meta=dbLabel(o)+" · "+o.s+" · "+o.la.toFixed(2)+"°, "+o.lo.toFixed(2)+"°";
+  if(sub)meta+=" · по станции «"+rr[0]+"»";
+  m.className="note";m.textContent=meta+(cd==="MSL"?" · высоты от среднего уровня моря":" · высоты от нуля глубин "+cd)+ZNOTE;ZNOTE="";
+  autoZoneFromDB=0;renderTide();
+}
+var autoZoneFromDB=0;
+["pdate","pdays","pzn","pzs"].forEach(function(id){$(id).addEventListener("change",function(){if(DBSEL&&TD&&TD.db)dbRun()})});
+$("pdate").addEventListener("input",function(){if(DBSEL&&TD&&TD.db)dbRun()});
+</script>
+</body>
+</html>
