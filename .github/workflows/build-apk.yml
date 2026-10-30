@@ -138,15 +138,15 @@ jobs:
           EOF
 
           cat > $A/res/values/colors.xml <<'EOF'
-          <resources><color name="ic_bg">#10131a</color></resources>
+          <resources><color name="ic_bg">#f4f6fa</color><color name="app_bg">#10131a</color></resources>
           EOF
 
           cat > $A/res/values/styles.xml <<'EOF'
           <resources>
               <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
-                  <item name="android:windowBackground">@color/ic_bg</item>
-                  <item name="android:statusBarColor">@color/ic_bg</item>
-                  <item name="android:navigationBarColor">@color/ic_bg</item>
+                  <item name="android:windowBackground">@color/app_bg</item>
+                  <item name="android:statusBarColor">@color/app_bg</item>
+                  <item name="android:navigationBarColor">@color/app_bg</item>
               </style>
           </resources>
           EOF
@@ -166,7 +166,7 @@ jobs:
           from PIL import Image
           em = Image.open("icons/emblem.png").convert("RGBA")
           def put(size, ratio, transparent):
-              c = Image.new("RGBA", (size, size), (0, 0, 0, 0) if transparent else (16, 19, 26, 255))
+              c = Image.new("RGBA", (size, size), (0, 0, 0, 0) if transparent else (244, 246, 250, 255))
               h = int(size * ratio); w = int(em.width * h / em.height)
               c.alpha_composite(em.resize((w, h), Image.LANCZOS), ((size - w) // 2, (size - h) // 2))
               return c
