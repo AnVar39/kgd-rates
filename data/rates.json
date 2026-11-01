@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-01T14:28:14.768317+00:00",
+ "updated": "2026-11-01T15:06:38.968002+00:00",
  "cbr": {
   "date": "31.10.2026",
   "USD": 80.5573,
@@ -696,8 +696,6 @@
    }
   }
  ],
- "errors": [
-  "history: ЦБ вернул не XML (код 502): '<!DOCTYPE html><html lang=en><meta charset=utf-8><meta name='"
- ],
- "banks_updated": "2026-11-01T14:28:14.768317+00:00"
+ "errors": [],
+ "banks_updated": "2026-11-01T15:06:38.968002+00:00"
 }
