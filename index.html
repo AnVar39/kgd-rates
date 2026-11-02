@@ -100,7 +100,7 @@ function render1(){
   $("v1").innerHTML=h+`<div class="mu">«Продать» — банк покупает у вас валюту (макс. курс). «Купить» — банк продаёт вам (мин. курс).</div><h2 style="font-size:17px;margin:18px 0 8px">Динамика курса ЦБ</h2><div id="charts"></div>`;
   renderCharts();
 }
-const LIVE="";/* адрес Cloudflare Worker, например https://kgd-rates-live.ИМЯ.workers.dev */
+const LIVE="https://kgd-rates-live.antondudko39.workers.dev";/* адрес Cloudflare Worker, например https://kgd-rates-live.ИМЯ.workers.dev */
 async function getData(){
   const st=fetch("data/rates.json?"+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()});
   if(LIVE){
