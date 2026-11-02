@@ -100,15 +100,33 @@ function render1(){
   $("v1").innerHTML=h+`<div class="mu">«Продать» — банк покупает у вас валюту (макс. курс). «Купить» — банк продаёт вам (мин. курс).</div><h2 style="font-size:17px;margin:18px 0 8px">Динамика курса ЦБ</h2><div id="charts"></div>`;
   renderCharts();
 }
+const LIVE="";/* адрес Cloudflare Worker, например https://kgd-rates-live.ИМЯ.workers.dev */
+async function getData(){
+  const st=fetch("data/rates.json?"+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()});
+  if(LIVE){
+    try{
+      const r=await fetch(LIVE,{cache:"no-store",signal:AbortSignal.timeout(9000)});
+      if(r.ok){
+        const j=await r.json();
+        if(j.banks&&j.banks.length&&j.cbr&&j.cbr.USD){
+          const s=await st.catch(()=>null);
+          if(s)j.banks.forEach(b=>{if(!(b.branches&&b.branches.length)){const o=s.banks.find(x=>x.name===b.name);if(o)b.branches=o.branches||[]}});
+          return j;
+        }
+      }
+    }catch(e){}
+  }
+  return st;
+}
 let lastU=null,fb;
 function note(t){const b=$("rf");b.textContent=t;clearTimeout(fb);fb=setTimeout(()=>b.textContent="Обновить",4000)}
 function load(manual){
   if(manual===true)note("Обновляю…");
-  fetch("data/rates.json?"+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(d=>{
+  getData().then(d=>{
     D=d;const u=d.updated?new Date(d.updated):null;
     if(manual===true){const mins=u?Math.max(0,Math.round((Date.now()-u.getTime())/60000)):null;note(u&&d.updated!==lastU?"Данные обновлены ✓":"Свежих данных пока нет"+(mins!=null?" ("+mins+" мин. назад)":""))}
     lastU=d.updated;
-    $("upd").textContent="Обновлено: "+(u?u.toLocaleString("ru-RU"):"нет данных");
+    $("upd").textContent="Обновлено: "+(u?u.toLocaleString("ru-RU"):"нет данных")+(d.live?" · онлайн":"");
     const bu=d.banks_updated?new Date(d.banks_updated):u;
     const old=bu&&(Date.now()-bu.getTime())>3*3600e3;
     $("stale").textContent=old?"Курсы банков не обновлялись с "+bu.toLocaleString("ru-RU")+" — источник временно недоступен.":"";
