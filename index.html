@@ -42,11 +42,13 @@ const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 
 const DOM=[["альфа","alfabank.ru"],["газпромбанк","gazprombank.ru"],["россельхоз","rshb.ru"],["т-банк","tbank.ru"],["тинькофф","tbank.ru"],["зенит","zenit.ru"],["интеза","bancaintesa.ru"],["морской","morbank.ru"],["энерготранс","energotransbank.com"],["камком","kamkombank.ru"],["трансканитал","tkb.ru"],["транскапитал","tkb.ru"],["мтс","mtsbank.ru"],["сбер","sberbank.ru"],["втб","vtb.ru"],["псб","psbank.ru"],["промсвязь","psbank.ru"],["совком","sovcombank.ru"],["санкт-петербург","bspb.ru"],["московский кредит","mkb.ru"],["мкб","mkb.ru"],["райффайзен","raiffeisen.ru"],["росбанк","rosbank.ru"],["открытие","open.ru"],["почта","pochtabank.ru"],["русский стандарт","rsb.ru"],["уралсиб","uralsib.ru"],["хоум","homecredit.ru"],["юникредит","unicreditbank.ru"],["озон","finance.ozon.ru"],["дом.рф","domrfbank.ru"],["акбарс","akbars.ru"],["ак барс","akbars.ru"],["локо","lockobank.ru"],["синара","sinara.ru"],["абсолют","absolutbank.ru"],["росселхоз","rshb.ru"]];
 function domOf(n){n=String(n).toLowerCase();const x=DOM.find(d=>n.includes(d[0]));return x&&x[1]}
+function hue(n){let x=0;for(const c of String(n))x=(x*31+c.charCodeAt(0))%360;return x}
+function lgl(n,L){return `<span class="lgl" style="background:hsl(${hue(n)},55%,45%)">${L}</span>`}
 function logo(n){
   const d=domOf(n),L=String(n).replace(/[^A-Za-zА-Яа-яЁё0-9]/g,"").charAt(0).toUpperCase()||"?";
-  return d?`<img class="lg" loading="lazy" alt="${L}" src="https://icons.duckduckgo.com/ip3/${d}.ico">`:`<span class="lgl">${L}</span>`;
+  return d?`<img class="lg" loading="lazy" alt="${L}" data-n="${esc(n)}" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://${d}&size=64">`:lgl(n,L);
 }
-document.addEventListener("error",e=>{const t=e.target;if(t&&t.tagName==="IMG"&&t.classList.contains("lg")){const s=document.createElement("span");s.className="lgl";s.textContent=t.alt;t.replaceWith(s)}},true);
+document.addEventListener("error",e=>{const t=e.target;if(t&&t.tagName==="IMG"&&t.classList.contains("lg")){const s=document.createElement("span");s.className="lgl";s.textContent=t.alt;s.style.background="hsl("+hue(t.dataset.n||t.alt)+",55%,45%)";t.replaceWith(s)}},true);
 const lk=b=>b?logo(b.name)+`<a class="lk" data-i="${D.banks.indexOf(b)}">${esc(b.name)}</a>`:"—";
 function best(banks,c){
   const a=banks.filter(b=>b[c]);if(!a.length)return {};
