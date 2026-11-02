@@ -44,8 +44,7 @@ const DOM=[["альфа","alfabank.ru"],["газпромбанк","gazprombank.r
 function domOf(n){n=String(n).toLowerCase();const x=DOM.find(d=>n.includes(d[0]));return x&&x[1]}
 function hue(n){let x=0;for(const c of String(n))x=(x*31+c.charCodeAt(0))%360;return x}
 function lgl(n,L){return `<span class="lgl" style="background:hsl(${hue(n)},55%,45%)">${L}</span>`}
-const ICON_DDG=["kamkombank.ru"];
-function icon(d){return ICON_DDG.includes(d)?"https://icons.duckduckgo.com/ip3/"+d+".ico":"https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://"+d+"&size=64"}
+function icon(d){return "logos/"+d+".png"}
 function logo(n){
   const d=domOf(n),L=String(n).replace(/[^A-Za-zА-Яа-яЁё0-9]/g,"").charAt(0).toUpperCase()||"?";
   return d?`<img class="lg" loading="lazy" alt="${L}" data-n="${esc(n)}" src="${icon(d)}">`:lgl(n,L);
@@ -103,20 +102,24 @@ function render1(){
   renderCharts();
 }
 const LIVE="https://kgd-rates-live.antondudko39.workers.dev";/* адрес Cloudflare Worker, например https://kgd-rates-live.ИМЯ.workers.dev */
+let liveErr="";
 async function getData(){
+  liveErr="";
   const st=fetch("data/rates.json?"+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()});
   if(LIVE){
     try{
       const r=await fetch(LIVE,{cache:"no-store",signal:AbortSignal.timeout(9000)});
       if(r.ok){
         const j=await r.json();
+        if(!(j.banks&&j.banks.length&&j.cbr&&j.cbr.USD)){liveErr="пустой ответ"+(j.error?": "+j.error:"")}
         if(j.banks&&j.banks.length&&j.cbr&&j.cbr.USD){
           const s=await st.catch(()=>null);
           if(s)j.banks.forEach(b=>{if(!(b.branches&&b.branches.length)){const o=s.banks.find(x=>x.name===b.name);if(o)b.branches=o.branches||[]}});
           return j;
         }
       }
-    }catch(e){}
+      else{let t="";try{t=(await r.json()).error||""}catch(_){}liveErr="HTTP "+r.status+(t?": "+t:"")}
+    }catch(e){liveErr=String(e&&e.message||e)}
   }
   return st;
 }
@@ -131,7 +134,7 @@ function load(manual){
     $("upd").textContent="Обновлено: "+(u?u.toLocaleString("ru-RU"):"нет данных")+(d.live?" · онлайн":"");
     const bu=d.banks_updated?new Date(d.banks_updated):u;
     const old=bu&&(Date.now()-bu.getTime())>3*3600e3;
-    $("stale").textContent=old?"Курсы банков не обновлялись с "+bu.toLocaleString("ru-RU")+" — источник временно недоступен.":"";
+    $("stale").textContent=(LIVE&&liveErr&&!d.live?"Онлайн-режим недоступен ("+liveErr.slice(0,160)+"). ":"")+(old?"Курсы банков не обновлялись с "+bu.toLocaleString("ru-RU")+" — источник временно недоступен.":"");
     $("err").textContent=(d.errors||[]).some(e=>/^cbr|банки не/.test(e))?"Часть данных временно недоступна.":"";
     render1();render2();
   }).catch(e=>{if(manual===true)note("Нет связи");$("err").textContent=D?"Не удалось обновить, показаны сохранённые данные.":"Ошибка загрузки: "+e});
