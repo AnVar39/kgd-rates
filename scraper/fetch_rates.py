@@ -19,9 +19,12 @@ NAMES = {"alfabank": "Альфа-Банк", "gazprombank": "Газпромбан
 def cbr():
     r = requests.get("https://www.cbr.ru/scripts/XML_daily.asp", headers=UA, timeout=30)
     root = ET.fromstring(r.content)
-    res = {"date": root.get("Date")}
+    res = {"date": root.get("Date"), "all": []}
     for v in root.findall("Valute"):
         code = v.findtext("CharCode")
+        res["all"].append({"code": code, "name": v.findtext("Name"),
+                           "nom": int(v.findtext("Nominal")),
+                           "value": float(v.findtext("Value").replace(",", "."))})
         if code in ("USD", "EUR"):
             res[code] = round(float(v.findtext("Value").replace(",", ".")) /
                               int(v.findtext("Nominal")), 4)

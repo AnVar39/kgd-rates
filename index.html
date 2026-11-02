@@ -28,8 +28,8 @@ tr.best{background:var(--okbg)}td.g{color:var(--ok);font-weight:700}
 </style></head><body>
 <header><h1>Курсы валют · Калининград</h1><img src="coat.png" alt="Герб Калининграда"></header>
 <div class="mu"><span id="upd">Загрузка…</span> <a class="lk" id="rf">Обновить</a></div><div class="mu" id="stale" style="color:#e0a030"></div><button id="inst">Установить приложение</button>
-<div class="tabs"><button id="t1" class="on">Главная</button><button id="t2">Все банки</button></div>
-<div id="v1"></div><div id="v2" hidden></div><div class="err" id="err"></div>
+<div class="tabs"><button id="t1" class="on">Главная</button><button id="t2">Все банки</button><button id="t3">Курсы ЦБ</button></div>
+<div id="v1"></div><div id="v2" hidden></div><div id="v3" hidden></div><div class="err" id="err"></div>
 <div id="md" hidden><div class="mb"><button id="mc">✕</button><div id="mh"></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -136,15 +136,28 @@ function load(manual){
     const old=bu&&(Date.now()-bu.getTime())>3*3600e3;
     $("stale").textContent=(LIVE&&liveErr&&!d.live?"Онлайн-режим недоступен ("+liveErr.slice(0,160)+"). ":"")+(old?"Курсы банков не обновлялись с "+bu.toLocaleString("ru-RU")+" — источник временно недоступен.":"");
     $("err").textContent=(d.errors||[]).some(e=>/^cbr|банки не/.test(e))?"Часть данных временно недоступна.":"";
-    render1();render2();
+    render1();render2();render3();
   }).catch(e=>{if(manual===true)note("Нет связи");$("err").textContent=D?"Не удалось обновить, показаны сохранённые данные.":"Ошибка загрузки: "+e});
   fetch("data/history.json?"+Date.now(),{cache:"no-store"}).then(r=>r.json()).then(x=>{H=x;if(D)render1();else renderCharts()}).catch(()=>{});
 }
 load();setInterval(()=>load(),5*60e3);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)load()});
 $("rf").onclick=()=>load(true);
-$("t1").onclick=()=>{$("v1").hidden=false;$("v2").hidden=true;$("t1").className="on";$("t2").className=""};
-$("t2").onclick=()=>{$("v1").hidden=true;$("v2").hidden=false;$("t2").className="on";$("t1").className=""};
+function tab(n){[1,2,3].forEach(i=>{$("v"+i).hidden=i!==n;$("t"+i).className=i===n?"on":""})}
+$("t1").onclick=()=>tab(1);$("t2").onclick=()=>tab(2);$("t3").onclick=()=>tab(3);
+let q3="";
+function render3(){
+  const c=D.cbr||{},all=c.all||[];
+  if(!all.length){$("v3").innerHTML='<div class="card mu">Полный список появится после ближайшего обновления данных.</div>';return}
+  const t=q3.trim().toLowerCase();
+  const rows=all.filter(x=>!t||x.code.toLowerCase().includes(t)||x.name.toLowerCase().includes(t));
+  const fm=v=>v.toLocaleString("ru-RU",{minimumFractionDigits:4,maximumFractionDigits:4});
+  let h='<div class="card wrap"><input id="q3" type="search" placeholder="Поиск: код или название валюты" value="'+q3.replace(/"/g,"&quot;")+'" style="width:100%;box-sizing:border-box;padding:10px;margin-bottom:10px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font:inherit"><table><tr><th>Валюта</th><th>Номинал</th><th>Курс, ₽</th></tr>';
+  rows.forEach(x=>{h+=`<tr><td>${x.name} <span class="mu">${x.code}</span></td><td>${x.nom}</td><td>${fm(x.value)}</td></tr>`});
+  if(!rows.length)h+='<tr><td colspan="3" class="mu">Ничего не найдено</td></tr>';
+  $("v3").innerHTML=h+`</table><div class="mu">Официальные курсы ЦБ РФ на ${c.date||""}. Курс указан за указанный номинал.</div></div>`;
+  const i=$("q3");i.oninput=()=>{q3=i.value;const p=i.selectionStart;render3();const j=$("q3");j.focus();j.setSelectionRange(p,p)};
+}
 
 let H=null,P=30,CH={};
 const PER=[[7,"7 дн."],[30,"1 мес."],[90,"3 мес."],[180,"6 мес."],[365,"1 год"]];

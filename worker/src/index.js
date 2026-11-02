@@ -22,14 +22,14 @@ export const num = (x) => {
 };
 
 export function parseCbr(xml) {
-  const out = { date: (xml.match(/<ValCurs[^>]*Date="([^"]+)"/) || [])[1] };
+  const out = { date: (xml.match(/<ValCurs[^>]*Date="([^"]+)"/) || [])[1], all: [] };
   for (const m of xml.matchAll(/<Valute[\s\S]*?<\/Valute>/g)) {
     const b = m[0];
     const code = (b.match(/<CharCode>(\w+)<\/CharCode>/) || [])[1];
-    if (code !== "USD" && code !== "EUR") continue;
     const nom = parseInt((b.match(/<Nominal>(\d+)<\/Nominal>/) || [])[1] || "1", 10);
     const val = parseFloat(((b.match(/<Value>([\d,]+)<\/Value>/) || [])[1] || "").replace(",", "."));
-    if (val) out[code] = Math.round((val / nom) * 1e4) / 1e4;
+    if (code && val) out.all.push({ code, name: (b.match(/<Name>([^<]*)<\/Name>/) || [])[1] || code, nom, value: val });
+    if (val && (code === "USD" || code === "EUR")) out[code] = Math.round((val / nom) * 1e4) / 1e4;
   }
   return out;
 }
