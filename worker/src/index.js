@@ -84,7 +84,10 @@ async function get(url, ms = 8000) {
   const r = await fetch(url, { headers: { "user-agent": UA, "accept-language": "ru-RU,ru;q=0.9" },
     signal: AbortSignal.timeout(ms) });
   if (!r.ok) throw new Error("HTTP " + r.status + " " + url);
-  return r.text();
+  const buf = await r.arrayBuffer();
+  let cs = ((r.headers.get("content-type") || "").match(/charset=([\w-]+)/i) || [])[1];
+  if (!cs) cs = (new TextDecoder("latin1").decode(buf.slice(0, 200)).match(/encoding="([\w-]+)"/i) || [])[1];
+  try { return new TextDecoder(cs || "utf-8").decode(buf); } catch { return new TextDecoder().decode(buf); }
 }
 
 export async function collect(errors) {
