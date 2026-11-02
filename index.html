@@ -100,21 +100,26 @@ function render1(){
   $("v1").innerHTML=h+`<div class="mu">«Продать» — банк покупает у вас валюту (макс. курс). «Купить» — банк продаёт вам (мин. курс).</div><h2 style="font-size:17px;margin:18px 0 8px">Динамика курса ЦБ</h2><div id="charts"></div>`;
   renderCharts();
 }
-function load(){
+let lastU=null,fb;
+function note(t){const b=$("rf");b.textContent=t;clearTimeout(fb);fb=setTimeout(()=>b.textContent="Обновить",4000)}
+function load(manual){
+  if(manual===true)note("Обновляю…");
   fetch("data/rates.json?"+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(d=>{
     D=d;const u=d.updated?new Date(d.updated):null;
+    if(manual===true){const mins=u?Math.max(0,Math.round((Date.now()-u.getTime())/60000)):null;note(u&&d.updated!==lastU?"Данные обновлены ✓":"Свежих данных пока нет"+(mins!=null?" ("+mins+" мин. назад)":""))}
+    lastU=d.updated;
     $("upd").textContent="Обновлено: "+(u?u.toLocaleString("ru-RU"):"нет данных");
     const bu=d.banks_updated?new Date(d.banks_updated):u;
     const old=bu&&(Date.now()-bu.getTime())>3*3600e3;
     $("stale").textContent=old?"Курсы банков не обновлялись с "+bu.toLocaleString("ru-RU")+" — источник временно недоступен.":"";
     $("err").textContent=(d.errors||[]).some(e=>/^cbr|банки не/.test(e))?"Часть данных временно недоступна.":"";
     render1();render2();
-  }).catch(e=>{$("err").textContent=D?"Не удалось обновить, показаны сохранённые данные.":"Ошибка загрузки: "+e});
+  }).catch(e=>{if(manual===true)note("Нет связи");$("err").textContent=D?"Не удалось обновить, показаны сохранённые данные.":"Ошибка загрузки: "+e});
   fetch("data/history.json?"+Date.now(),{cache:"no-store"}).then(r=>r.json()).then(x=>{H=x;if(D)render1();else renderCharts()}).catch(()=>{});
 }
-load();setInterval(load,10*60e3);
+load();setInterval(()=>load(),5*60e3);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)load()});
-$("rf").onclick=load;
+$("rf").onclick=()=>load(true);
 $("t1").onclick=()=>{$("v1").hidden=false;$("v2").hidden=true;$("t1").className="on";$("t2").className=""};
 $("t2").onclick=()=>{$("v1").hidden=true;$("v2").hidden=false;$("t2").className="on";$("t1").className=""};
 

@@ -11,16 +11,20 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 58
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install requests
-      - run: python scraper/fetch_rates.py
-      - run: |
+      - name: Обновлять курсы каждые 10 минут в течение запуска
+        run: |
           git config user.name "rates-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add data
-          git diff --cached --quiet || (git commit -m "update rates" && git pull --rebase && git push)
+          for i in 1 2 3 4 5; do
+            python scraper/fetch_rates.py || true
+            git add data
+            git diff --cached --quiet || (git commit -m "update rates" && git pull --rebase -q && git push -q) || true
+            [ "$i" -lt 5 ] && sleep 600
+          done
