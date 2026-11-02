@@ -76,9 +76,9 @@ function render2(){
   let h='<div class="card wrap"><table><tr><th data-k="name" class="'+(key==="name"?"on":"")+'">Банк'+arrow("name")+'</th>'+
    COLS.map(([c,t,l])=>{const k=c+"."+t;return `<th data-k="${k}" class="${key===k?"on":""}">${l}${arrow(k)}</th>`}).join("")+"</tr>";
   banks.forEach(b=>{
-    h+=`<tr class="${b===w?"best":""}"><td>${b===w?"★ ":""}${lk(b)}</td>`+COLS.map(([c,t])=>{const v=val(b,c,t);return `<td class="${t==="buy"&&v!=null&&v===ext[c+t]?"g":""}">${f(v)}</td>`}).join("")+"</tr>";
+    h+=`<tr class="${b===w?"best":""}"><td>${lk(b)}</td>`+COLS.map(([c,t])=>{const v=val(b,c,t);return `<td class="${t==="buy"&&v!=null&&v===ext[c+t]?"g":""}">${f(v)}</td>`}).join("")+"</tr>";
   });
-  $("v2").innerHTML=h+`</table><div class="mu">Нажмите на заголовок столбца — сортировка по возрастанию/убыванию. Зелёная строка (★) — банк с лучшей ценой покупки: он больше всех платит за ваши доллары и евро; зелёные цифры — максимальный курс покупки в столбце. Покупка — банк покупает у вас, продажа — банк продаёт вам.</div></div>`;
+  $("v2").innerHTML=h+`</table><div class="mu">Нажмите на заголовок столбца — сортировка по возрастанию/убыванию. Зелёная строка — банк с лучшей ценой покупки: он больше всех платит за ваши доллары и евро; зелёные цифры — максимальный курс покупки в столбце. Покупка — банк покупает у вас, продажа — банк продаёт вам.</div></div>`;
   $("v2").querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(key===k)dir=-dir;else{key=k;dir=1}render2()});
 }
 function cbrDelta(c){
