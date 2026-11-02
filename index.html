@@ -24,7 +24,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px}he
 th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}th:first-child,td:first-child{text-align:left;white-space:normal}
 th{cursor:pointer;user-select:none}th.on{color:var(--ac)}
 tr.best{background:var(--okbg)}td.g{color:var(--ok);font-weight:700}
-.lk{color:var(--ac);text-decoration:underline;cursor:pointer}#md{position:fixed;inset:0;background:#0009;display:flex;align-items:flex-end;justify-content:center;z-index:9}#md[hidden]{display:none}.mb{background:var(--card);width:100%;max-width:720px;max-height:82vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}.mb h2{margin:0 0 4px;font-size:18px}.br{padding:10px 0;border-bottom:1px solid var(--bd)}.br a{font-size:13px}#mc{float:right;border:0;background:none;color:var(--tx);font-size:22px}.chips{display:flex;gap:6px;margin:4px 0 10px}.chips button{flex:1;padding:8px 2px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;font-size:13px}.chips button.on{background:var(--ac);color:#fff;border-color:var(--ac)}.ch svg{width:100%;height:auto;display:block;touch-action:pan-y}.ch .hd{display:flex;justify-content:space-between;align-items:baseline}.pos{color:var(--ok)}.neg{color:#d64545}.dl{font-size:15px;font-weight:600;margin-left:4px}.err{color:#c0392b;font-size:13px}#inst{display:none;margin-top:8px;padding:8px 12px;border-radius:10px;border:0;background:var(--ac);color:#fff;font:inherit}
+.lk{color:var(--ac);text-decoration:underline;cursor:pointer}#md{position:fixed;inset:0;background:#0009;display:flex;align-items:flex-end;justify-content:center;z-index:9}#md[hidden]{display:none}.mb{background:var(--card);width:100%;max-width:720px;max-height:82vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}.mb h2{margin:0 0 4px;font-size:18px}.br{padding:10px 0;border-bottom:1px solid var(--bd)}.br a{font-size:13px}#mc{float:right;border:0;background:none;color:var(--tx);font-size:22px}.chips{display:flex;gap:6px;margin:4px 0 10px}.chips button{flex:1;padding:8px 2px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;font-size:13px}.chips button.on{background:var(--ac);color:#fff;border-color:var(--ac)}.ch svg{width:100%;height:auto;display:block;touch-action:pan-y}.ch .hd{display:flex;justify-content:space-between;align-items:baseline}.pos{color:var(--ok)}.neg{color:#d64545}.dl{font-size:15px;font-weight:600;margin-left:4px}.lg{width:22px;height:22px;border-radius:6px;vertical-align:-6px;margin-right:7px;background:#fff;object-fit:contain;border:1px solid var(--bd)}.lgl{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;vertical-align:-6px;margin-right:7px;background:var(--ac);color:#fff;font-size:12px;font-weight:700}.err{color:#c0392b;font-size:13px}#inst{display:none;margin-top:8px;padding:8px 12px;border-radius:10px;border:0;background:var(--ac);color:#fff;font:inherit}
 </style></head><body>
 <header><h1>Курсы валют · Калининград</h1><img src="coat.png" alt="Герб Калининграда"></header>
 <div class="mu"><span id="upd">Загрузка…</span> <a class="lk" id="rf">Обновить</a></div><div class="mu" id="stale" style="color:#e0a030"></div><button id="inst">Установить приложение</button>
@@ -39,7 +39,15 @@ const COLS=[["USD","buy","$ покупка"],["USD","sell","$ продажа"],[
 let D=null,key="name",dir=1;
 const val=(b,c,t)=>b[c]?b[c][t]:null;
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
-const lk=b=>b?`<a class="lk" data-i="${D.banks.indexOf(b)}">${esc(b.name)}</a>`:"—";
+
+const DOM=[["альфа","alfabank.ru"],["газпромбанк","gazprombank.ru"],["россельхоз","rshb.ru"],["т-банк","tbank.ru"],["тинькофф","tbank.ru"],["зенит","zenit.ru"],["интеза","bancaintesa.ru"],["морской","morbank.ru"],["энерготранс","energotransbank.com"],["камком","kamkombank.ru"],["трансканитал","tkb.ru"],["транскапитал","tkb.ru"],["мтс","mtsbank.ru"],["сбер","sberbank.ru"],["втб","vtb.ru"],["псб","psbank.ru"],["промсвязь","psbank.ru"],["совком","sovcombank.ru"],["санкт-петербург","bspb.ru"],["московский кредит","mkb.ru"],["мкб","mkb.ru"],["райффайзен","raiffeisen.ru"],["росбанк","rosbank.ru"],["открытие","open.ru"],["почта","pochtabank.ru"],["русский стандарт","rsb.ru"],["уралсиб","uralsib.ru"],["хоум","homecredit.ru"],["юникредит","unicreditbank.ru"],["озон","finance.ozon.ru"],["дом.рф","domrfbank.ru"],["акбарс","akbars.ru"],["ак барс","akbars.ru"],["локо","lockobank.ru"],["синара","sinara.ru"],["абсолют","absolutbank.ru"],["росселхоз","rshb.ru"]];
+function domOf(n){n=String(n).toLowerCase();const x=DOM.find(d=>n.includes(d[0]));return x&&x[1]}
+function logo(n){
+  const d=domOf(n),L=String(n).replace(/[^A-Za-zА-Яа-яЁё0-9]/g,"").charAt(0).toUpperCase()||"?";
+  return d?`<img class="lg" loading="lazy" alt="${L}" src="https://icons.duckduckgo.com/ip3/${d}.ico">`:`<span class="lgl">${L}</span>`;
+}
+document.addEventListener("error",e=>{const t=e.target;if(t&&t.tagName==="IMG"&&t.classList.contains("lg")){const s=document.createElement("span");s.className="lgl";s.textContent=t.alt;t.replaceWith(s)}},true);
+const lk=b=>b?logo(b.name)+`<a class="lk" data-i="${D.banks.indexOf(b)}">${esc(b.name)}</a>`:"—";
 function best(banks,c){
   const a=banks.filter(b=>b[c]);if(!a.length)return {};
   return {sell:a.reduce((m,b)=>b[c].buy>m[c].buy?b:m),buy:a.reduce((m,b)=>b[c].sell<m[c].sell?b:m)};
@@ -164,7 +172,7 @@ function renderCharts(){
 }
 function openBank(i){const b=D.banks[i];if(!b)return;const br=b.branches||[];
   const r=(x,l)=>x?`${l} ${f(x.buy)} / ${f(x.sell)}`:"";
-  $("mh").innerHTML=`<h2>${esc(b.name)}</h2><div class="mu">Пункты обмена и отделения в Калининграде: ${br.length}. Курс: покупка / продажа.</div>`+
+  $("mh").innerHTML=`<h2>${logo(b.name)}${esc(b.name)}</h2><div class="mu">Пункты обмена и отделения в Калининграде: ${br.length}. Курс: покупка / продажа.</div>`+
    (br.length?br.map(x=>`<div class="br">${esc(x.address)}<div class="mu">${[r(x.USD,"$"),r(x.EUR,"€")].filter(Boolean).join(" · ")}</div><a class="lk" target="_blank" rel="noopener" href="https://yandex.ru/maps/?text=${encodeURIComponent("Калининград "+b.name+" "+x.address)}">Показать на карте</a></div>`).join(""):'<div class="br mu">Адреса пока не найдены.</div>')+
    `<div class="mu" style="margin-top:8px">Перед визитом уточните курс и наличие валюты в отделении.</div>`;
   $("md").hidden=false}

@@ -80,7 +80,8 @@ def bank_name(slug, page):
         return NAMES[slug]
     m = re.search(r"<h1[^>]*>(.*?)</h1>", page, re.S)
     t = strip(m.group(1)) if m else slug
-    return re.sub(r"^Курсы валют в\s+|\s+в Калининграде.*$", "", t)
+    t = re.sub(r"^Курсы валют в\s+|\s+в Калининграде.*$", "", t)
+    return {"Райффайзенбанке": "Райффайзенбанк", "Росбанке": "Росбанк", "Открытии": "Открытие"}.get(t, t)
 
 def collect(errors):
     queue, seen, banks = list(SEEDS), set(), {}
