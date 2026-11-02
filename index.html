@@ -44,9 +44,11 @@ const DOM=[["альфа","alfabank.ru"],["газпромбанк","gazprombank.r
 function domOf(n){n=String(n).toLowerCase();const x=DOM.find(d=>n.includes(d[0]));return x&&x[1]}
 function hue(n){let x=0;for(const c of String(n))x=(x*31+c.charCodeAt(0))%360;return x}
 function lgl(n,L){return `<span class="lgl" style="background:hsl(${hue(n)},55%,45%)">${L}</span>`}
+const ICON_DDG=["kamkombank.ru"];
+function icon(d){return ICON_DDG.includes(d)?"https://icons.duckduckgo.com/ip3/"+d+".ico":"https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://"+d+"&size=64"}
 function logo(n){
   const d=domOf(n),L=String(n).replace(/[^A-Za-zА-Яа-яЁё0-9]/g,"").charAt(0).toUpperCase()||"?";
-  return d?`<img class="lg" loading="lazy" alt="${L}" data-n="${esc(n)}" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://${d}&size=64">`:lgl(n,L);
+  return d?`<img class="lg" loading="lazy" alt="${L}" data-n="${esc(n)}" src="${icon(d)}">`:lgl(n,L);
 }
 document.addEventListener("error",e=>{const t=e.target;if(t&&t.tagName==="IMG"&&t.classList.contains("lg")){const s=document.createElement("span");s.className="lgl";s.textContent=t.alt;s.style.background="hsl("+hue(t.dataset.n||t.alt)+",55%,45%)";t.replaceWith(s)}},true);
 const lk=b=>b?logo(b.name)+`<a class="lk" data-i="${D.banks.indexOf(b)}">${esc(b.name)}</a>`:"—";
