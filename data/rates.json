@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-03T15:28:34.368665+00:00",
+ "updated": "2026-11-03T15:39:28.421568+00:00",
  "cbr": {
   "date": "04.11.2026",
   "all": [
@@ -837,6 +837,41 @@
    }
   },
   {
+   "name": "Сбербанк",
+   "branches": [
+    {
+     "address": "г. Калининград, просп. Советский, 2а",
+     "USD": {
+      "buy": 79.1,
+      "sell": 84.5
+     },
+     "EUR": {
+      "buy": 91.8,
+      "sell": 97.1
+     }
+    },
+    {
+     "address": "г. Калининград, ул. Александра Невского, 50-52А",
+     "USD": {
+      "buy": 78.4,
+      "sell": 86.0
+     },
+     "EUR": {
+      "buy": 90.0,
+      "sell": 98.0
+     }
+    }
+   ],
+   "USD": {
+    "buy": 79.1,
+    "sell": 84.5
+   },
+   "EUR": {
+    "buy": 91.8,
+    "sell": 97.1
+   }
+  },
+  {
    "name": "Совкомбанк",
    "branches": [
     {
@@ -864,20 +899,129 @@
    "name": "Т-Банк",
    "branches": [],
    "USD": {
-    "buy": 80.95,
+    "buy": 80.9,
     "sell": 85.4
    },
    "EUR": {
-    "buy": 90.35,
-    "sell": 95.5
+    "buy": 90.3,
+    "sell": 95.4
+   }
+  },
+  {
+   "name": "ТрансКапиталБанк",
+   "branches": [
+    {
+     "address": "г. Калининград, просп. Мира, д. 72—72а",
+     "USD": {
+      "buy": 82.05,
+      "sell": 83.5
+     },
+     "EUR": {
+      "buy": 92.05,
+      "sell": 94.5
+     }
+    }
+   ],
+   "USD": {
+    "buy": 82.05,
+    "sell": 83.5
+   },
+   "EUR": {
+    "buy": 92.05,
+    "sell": 94.5
+   }
+  },
+  {
+   "name": "Энерготрансбанк",
+   "branches": [
+    {
+     "address": "г. Калининград, ул. Генерала Челнокова, д. 18 Б",
+     "USD": {
+      "buy": 80.5,
+      "sell": 84.0
+     },
+     "EUR": {
+      "buy": 92.5,
+      "sell": 94.0
+     }
+    },
+    {
+     "address": "г. Калининград, ул. Клиническая, д. 83а",
+     "USD": {
+      "buy": 80.5,
+      "sell": 84.0
+     },
+     "EUR": {
+      "buy": 92.5,
+      "sell": 94.0
+     }
+    },
+    {
+     "address": "г. Калининград, пл. Калинина, д. 11—15",
+     "USD": {
+      "buy": 80.5,
+      "sell": 84.0
+     },
+     "EUR": {
+      "buy": 92.5,
+      "sell": 94.0
+     }
+    },
+    {
+     "address": "г. Калининград, ул. Громовой, д. 40—50",
+     "USD": {
+      "buy": 80.5,
+      "sell": 84.0
+     },
+     "EUR": {
+      "buy": 92.5,
+      "sell": 94.0
+     }
+    },
+    {
+     "address": "г. Калининград, ул. Черняховского, д. 1-3-5",
+     "USD": {
+      "buy": 80.5,
+      "sell": 84.0
+     },
+     "EUR": {
+      "buy": 92.5,
+      "sell": 94.0
+     }
+    },
+    {
+     "address": "г. Калининград, ул. Профессора Баранова, д. 1",
+     "USD": {
+      "buy": 80.5,
+      "sell": 84.0
+     },
+     "EUR": {
+      "buy": 92.5,
+      "sell": 94.0
+     }
+    },
+    {
+     "address": "г. Калининград, ул. Черняховского, д. 15",
+     "USD": {
+      "buy": 80.5,
+      "sell": 84.0
+     },
+     "EUR": {
+      "buy": 92.5,
+      "sell": 94.0
+     }
+    }
+   ],
+   "USD": {
+    "buy": 80.5,
+    "sell": 84.0
+   },
+   "EUR": {
+    "buy": 92.5,
+    "sell": 94.0
    }
   }
  ],
- "errors": [
-  "cbr: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
-  "energotransbank: HTTPSConnectionPool(host='ru.myfin.by', port=443): Read timed out. (read timeout=30)",
-  "transcapitalbank: HTTPSConnectionPool(host='ru.myfin.by', port=443): Read timed out. (read timeout=30)",
-  "sberbank: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
- ],
- "banks_updated": "2026-11-03T15:28:34.368665+00:00"
+ "errors": [],
+ "banks_updated": "2026-11-03T15:39:28.421568+00:00"
 }
