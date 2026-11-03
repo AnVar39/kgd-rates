@@ -26,5 +26,6 @@ jobs:
             python scraper/fetch_rates.py || true
             git add data
             git diff --cached --quiet || (git commit -m "update rates" && git pull --rebase -q && git push -q) || true
-            [ "$i" -lt 5 ] && sleep 600
+            if [ "$i" -lt 5 ]; then sleep 600; fi
           done
+          exit 0
