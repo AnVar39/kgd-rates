@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-12T14:17:08.369753+00:00",
+ "updated": "2026-11-12T14:27:36.749286+00:00",
  "cbr": {
   "date": "12.11.2026",
   "all": [
@@ -881,18 +881,6 @@
    }
   },
   {
-   "name": "Т-Банк",
-   "branches": [],
-   "USD": {
-    "buy": 82.25,
-    "sell": 86.8
-   },
-   "EUR": {
-    "buy": 91.65,
-    "sell": 95.85
-   }
-  },
-  {
    "name": "ТрансКапиталБанк",
    "branches": [
     {
@@ -1007,6 +995,8 @@
    }
   }
  ],
- "errors": [],
- "banks_updated": "2026-11-12T14:17:08.369753+00:00"
+ "errors": [
+  "tcs: HTTPSConnectionPool(host='ru.myfin.by', port=443): Max retries exceeded with url: /bank/tcs/currency/kaliningrad (Caused by ConnectTimeoutError(<HTTPSConnection(host='ru.myfin.by', port=443) at 0x707d40a77e60>, 'Connection to ru.myfin.by timed out. (connect timeout=30)'))"
+ ],
+ "banks_updated": "2026-11-12T14:27:36.749286+00:00"
 }
