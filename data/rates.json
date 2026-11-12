@@ -1,335 +1,335 @@
 {
- "updated": "2026-11-12T14:27:36.749286+00:00",
+ "updated": "2026-11-12T14:47:21.318297+00:00",
  "cbr": {
-  "date": "12.11.2026",
+  "date": "13.11.2026",
   "all": [
    {
     "code": "AUD",
     "name": "Австралийский доллар",
     "nom": 1,
-    "value": 56.8547
+    "value": 56.7668
    },
    {
     "code": "AZN",
     "name": "Азербайджанский манат",
     "nom": 1,
-    "value": 48.6245
+    "value": 48.8119
    },
    {
     "code": "DZD",
     "name": "Алжирских динаров",
     "nom": 100,
-    "value": 60.6314
+    "value": 60.7364
    },
    {
     "code": "GBP",
     "name": "Фунт стерлингов",
     "nom": 1,
-    "value": 110.2294
+    "value": 110.2144
    },
    {
     "code": "AMD",
     "name": "Армянских драмов",
     "nom": 100,
-    "value": 22.931
+    "value": 23.0175
    },
    {
     "code": "BHD",
     "name": "Бахрейнский динар",
     "nom": 1,
-    "value": 219.7975
+    "value": 220.6446
    },
    {
     "code": "BYN",
     "name": "Белорусский рубль",
     "nom": 1,
-    "value": 27.4898
+    "value": 27.6361
    },
    {
     "code": "BOB",
     "name": "Боливиано",
     "nom": 10,
-    "value": 70.5907
+    "value": 70.9233
    },
    {
     "code": "BRL",
     "name": "Бразильский реал",
     "nom": 1,
-    "value": 14.8041
+    "value": 14.9237
    },
    {
     "code": "HUF",
     "name": "Форинтов",
     "nom": 100,
-    "value": 25.2294
+    "value": 25.2865
    },
    {
     "code": "VND",
     "name": "Донгов",
     "nom": 10000,
-    "value": 32.2759
+    "value": 32.3851
    },
    {
     "code": "HKD",
     "name": "Гонконгский доллар",
     "nom": 1,
-    "value": 10.5342
+    "value": 10.5761
    },
    {
     "code": "GEL",
     "name": "Лари",
     "nom": 1,
-    "value": 31.8714
+    "value": 31.998
    },
    {
     "code": "DKK",
     "name": "Датская крона",
     "nom": 1,
-    "value": 12.4003
+    "value": 12.3514
    },
    {
     "code": "AED",
     "name": "Дирхам ОАЭ",
     "nom": 1,
-    "value": 22.5083
+    "value": 22.595
    },
    {
     "code": "USD",
     "name": "Доллар США",
     "nom": 1,
-    "value": 82.6617
+    "value": 82.9803
    },
    {
     "code": "EUR",
     "name": "Евро",
     "nom": 1,
-    "value": 92.6968
+    "value": 92.3322
    },
    {
     "code": "EGP",
     "name": "Египетских фунтов",
     "nom": 10,
-    "value": 15.4347
+    "value": 15.4942
    },
    {
     "code": "INR",
     "name": "Индийских рупий",
     "nom": 100,
-    "value": 88.1184
+    "value": 88.4982
    },
    {
     "code": "IDR",
     "name": "Рупий",
     "nom": 10000,
-    "value": 45.7731
+    "value": 45.7091
    },
    {
     "code": "IRR",
     "name": "Иранских риалов",
     "nom": 1000000,
-    "value": 43.4869
+    "value": 43.5673
    },
    {
     "code": "KZT",
     "name": "Тенге",
     "nom": 100,
-    "value": 18.4711
+    "value": 18.6573
    },
    {
     "code": "CAD",
     "name": "Канадский доллар",
     "nom": 1,
-    "value": 58.2905
+    "value": 58.5151
    },
    {
     "code": "QAR",
     "name": "Катарский риал",
     "nom": 1,
-    "value": 22.7093
+    "value": 22.7968
    },
    {
     "code": "KGS",
     "name": "Сомов",
     "nom": 100,
-    "value": 94.525
+    "value": 94.89
    },
    {
     "code": "CNY",
     "name": "Юань",
     "nom": 1,
-    "value": 12.3907
+    "value": 12.4009
    },
    {
     "code": "CUP",
     "name": "Кубинских песо",
     "nom": 10,
-    "value": 34.4424
+    "value": 34.5751
    },
    {
     "code": "MDL",
     "name": "Молдавских леев",
     "nom": 10,
-    "value": 46.0619
+    "value": 45.8331
    },
    {
     "code": "MNT",
     "name": "Тугриков",
     "nom": 1000,
-    "value": 22.9467
+    "value": 23.0313
    },
    {
     "code": "NGN",
     "name": "Найр",
     "nom": 1000,
-    "value": 61.192
+    "value": 61.0896
    },
    {
     "code": "NZD",
     "name": "Новозеландский доллар",
     "nom": 1,
-    "value": 46.3401
+    "value": 46.1495
    },
    {
     "code": "NOK",
     "name": "Норвежских крон",
     "nom": 10,
-    "value": 87.3221
+    "value": 86.9869
    },
    {
     "code": "OMR",
     "name": "Оманский риал",
     "nom": 1,
-    "value": 214.9849
+    "value": 215.8135
    },
    {
     "code": "PLN",
     "name": "Злотый",
     "nom": 1,
-    "value": 21.1416
+    "value": 20.9145
    },
    {
     "code": "SAR",
     "name": "Саудовский риял",
     "nom": 1,
-    "value": 22.0431
+    "value": 22.1281
    },
    {
     "code": "RON",
     "name": "Румынский лей",
     "nom": 1,
-    "value": 17.2244
+    "value": 17.2319
    },
    {
     "code": "XDR",
     "name": "СДР (специальные права заимствования)",
     "nom": 1,
-    "value": 112.081
+    "value": 112.1421
    },
    {
     "code": "SGD",
     "name": "Сингапурский доллар",
     "nom": 1,
-    "value": 64.4837
+    "value": 64.5711
    },
    {
     "code": "TJS",
     "name": "Сомони",
     "nom": 10,
-    "value": 89.8233
+    "value": 90.1695
    },
    {
     "code": "THB",
     "name": "Батов",
     "nom": 10,
-    "value": 24.5944
+    "value": 24.5678
    },
    {
     "code": "BDT",
     "name": "Так",
     "nom": 100,
-    "value": 66.3277
+    "value": 66.4579
    },
    {
     "code": "TRY",
     "name": "Турецких лир",
     "nom": 10,
-    "value": 16.4819
+    "value": 16.5355
    },
    {
     "code": "TMT",
     "name": "Новый туркменский манат",
     "nom": 1,
-    "value": 23.6176
+    "value": 23.7087
    },
    {
     "code": "UZS",
     "name": "Узбекских сумов",
     "nom": 10000,
-    "value": 69.0342
+    "value": 69.3568
    },
    {
     "code": "UAH",
     "name": "Гривен",
     "nom": 10,
-    "value": 18.1669
+    "value": 18.309
    },
    {
     "code": "CZK",
     "name": "Чешских крон",
     "nom": 10,
-    "value": 38.0894
+    "value": 37.8733
    },
    {
     "code": "SEK",
     "name": "Шведских крон",
     "nom": 10,
-    "value": 84.3389
+    "value": 83.551
    },
    {
     "code": "CHF",
     "name": "Швейцарский франк",
     "nom": 1,
-    "value": 99.7848
+    "value": 99.7599
    },
    {
     "code": "ETB",
     "name": "Эфиопских быров",
     "nom": 100,
-    "value": 51.3428
+    "value": 51.5631
    },
    {
     "code": "RSD",
     "name": "Сербских динаров",
     "nom": 100,
-    "value": 78.9229
+    "value": 78.1677
    },
    {
     "code": "ZAR",
     "name": "Рэндов",
     "nom": 10,
-    "value": 49.9581
+    "value": 49.8884
    },
    {
     "code": "KRW",
     "name": "Вон",
     "nom": 1000,
-    "value": 61.5363
+    "value": 62.0785
    },
    {
     "code": "JPY",
     "name": "Иен",
     "nom": 100,
-    "value": 52.0409
+    "value": 51.9862
    },
    {
     "code": "MMK",
     "name": "Кьятов",
     "nom": 1000,
-    "value": 39.3627
+    "value": 39.5144
    }
   ],
-  "USD": 82.6617,
-  "EUR": 92.6968
+  "USD": 82.9803,
+  "EUR": 92.3322
  },
  "banks": [
   {
@@ -759,6 +759,10 @@
      }
     }
    ],
+   "USD": {
+    "buy": 77.6,
+    "sell": 95.3
+   },
    "EUR": {
     "buy": 82.4,
     "sell": 103.9
@@ -881,6 +885,14 @@
    }
   },
   {
+   "name": "Т-Банк",
+   "branches": [],
+   "USD": {
+    "buy": 82.25,
+    "sell": 86.8
+   }
+  },
+  {
    "name": "ТрансКапиталБанк",
    "branches": [
     {
@@ -995,8 +1007,6 @@
    }
   }
  ],
- "errors": [
-  "tcs: HTTPSConnectionPool(host='ru.myfin.by', port=443): Max retries exceeded with url: /bank/tcs/currency/kaliningrad (Caused by ConnectTimeoutError(<HTTPSConnection(host='ru.myfin.by', port=443) at 0x707d40a77e60>, 'Connection to ru.myfin.by timed out. (connect timeout=30)'))"
- ],
- "banks_updated": "2026-11-12T14:27:36.749286+00:00"
+ "errors": [],
+ "banks_updated": "2026-11-12T14:47:21.318297+00:00"
 }
