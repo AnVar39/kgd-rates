@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-16T10:31:23.702282+00:00",
+ "updated": "2026-11-16T10:42:47.634402+00:00",
  "cbr": {
   "date": "14.11.2026",
   "all": [
@@ -365,6 +365,30 @@
    "EUR": {
     "buy": 90.6,
     "sell": 93.6
+   }
+  },
+  {
+   "name": "Банк Зенит",
+   "branches": [
+    {
+     "address": "г. Калининград, просп. Ленинский, д. 155а",
+     "USD": {
+      "buy": 82.3,
+      "sell": 84.5
+     },
+     "EUR": {
+      "buy": 92.0,
+      "sell": 93.9
+     }
+    }
+   ],
+   "USD": {
+    "buy": 82.3,
+    "sell": 84.5
+   },
+   "EUR": {
+    "buy": 92.0,
+    "sell": 93.9
    }
   },
   {
@@ -979,9 +1003,6 @@
    }
   }
  ],
- "errors": [
-  "zenit: HTTPSConnectionPool(host='ru.myfin.by', port=443): Max retries exceeded with url: /bank/zenit/currency/kaliningrad (Caused by ConnectTimeoutError(<HTTPSConnection(host='ru.myfin.by', port=443) at 0x7086bd7fb1d0>, 'Connection to ru.myfin.by timed out. (connect timeout=30)'))",
-  "psb: HTTPSConnectionPool(host='ru.myfin.by', port=443): Max retries exceeded with url: /bank/psb/currency/kaliningrad (Caused by ConnectTimeoutError(<HTTPSConnection(host='ru.myfin.by', port=443) at 0x7086bd84aab0>, 'Connection to ru.myfin.by timed out. (connect timeout=30)'))"
- ],
- "banks_updated": "2026-11-16T10:31:23.702282+00:00"
+ "errors": [],
+ "banks_updated": "2026-11-16T10:42:47.634402+00:00"
 }
