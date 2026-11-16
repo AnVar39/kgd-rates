@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-16T10:20:58.933273+00:00",
+ "updated": "2026-11-16T10:31:23.702282+00:00",
  "cbr": {
   "date": "14.11.2026",
   "all": [
@@ -368,30 +368,6 @@
    }
   },
   {
-   "name": "Банк Зенит",
-   "branches": [
-    {
-     "address": "г. Калининград, просп. Ленинский, д. 155а",
-     "USD": {
-      "buy": 82.3,
-      "sell": 84.5
-     },
-     "EUR": {
-      "buy": 92.0,
-      "sell": 93.9
-     }
-    }
-   ],
-   "USD": {
-    "buy": 82.3,
-    "sell": 84.5
-   },
-   "EUR": {
-    "buy": 92.0,
-    "sell": 93.9
-   }
-  },
-  {
    "name": "Банк Интеза",
    "branches": [
     {
@@ -750,18 +726,18 @@
     {
      "address": "г. Калининград, ул. Театральная, д. 30",
      "USD": {
-      "buy": 77.1,
-      "sell": 94.7
+      "buy": 77.4,
+      "sell": 95.1
      },
      "EUR": {
-      "buy": 81.3,
-      "sell": 102.6
+      "buy": 81.5,
+      "sell": 102.9
      }
     }
    ],
    "EUR": {
-    "buy": 81.3,
-    "sell": 102.6
+    "buy": 81.5,
+    "sell": 102.9
    }
   },
   {
@@ -862,22 +838,22 @@
     {
      "address": "г. Калининград, просп. Ленинский, д. 103—109",
      "USD": {
-      "buy": 82.8,
-      "sell": 83.7
+      "buy": 82.9,
+      "sell": 83.8
      },
      "EUR": {
-      "buy": 92.55,
-      "sell": 93.75
+      "buy": 92.65,
+      "sell": 93.85
      }
     }
    ],
    "USD": {
-    "buy": 82.8,
-    "sell": 83.7
+    "buy": 82.9,
+    "sell": 83.8
    },
    "EUR": {
-    "buy": 92.55,
-    "sell": 93.75
+    "buy": 92.65,
+    "sell": 93.85
    }
   },
   {
@@ -1003,6 +979,9 @@
    }
   }
  ],
- "errors": [],
- "banks_updated": "2026-11-16T10:20:58.933273+00:00"
+ "errors": [
+  "zenit: HTTPSConnectionPool(host='ru.myfin.by', port=443): Max retries exceeded with url: /bank/zenit/currency/kaliningrad (Caused by ConnectTimeoutError(<HTTPSConnection(host='ru.myfin.by', port=443) at 0x7086bd7fb1d0>, 'Connection to ru.myfin.by timed out. (connect timeout=30)'))",
+  "psb: HTTPSConnectionPool(host='ru.myfin.by', port=443): Max retries exceeded with url: /bank/psb/currency/kaliningrad (Caused by ConnectTimeoutError(<HTTPSConnection(host='ru.myfin.by', port=443) at 0x7086bd84aab0>, 'Connection to ru.myfin.by timed out. (connect timeout=30)'))"
+ ],
+ "banks_updated": "2026-11-16T10:31:23.702282+00:00"
 }
